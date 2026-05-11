@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Obsidian — Command Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #FFFFFF;
+    --bg2:       #F8F9FC;
+    --bg3:       #F1F3F7;
+    --bg4:       #E9ECF2;
+    --border:    #E5E7EB;
+    --border2:   #D1D5DB;
+    --text:      #0A0A0A;
+    --text2:     #6B7280;
+    --text3:     #9CA3AF;
+    --accent:    #1E3A5F;
+    --accent2:   #2E5F9E;
+    --accent-dim:  rgba(30,58,95,0.06);
+    --accent-dim2: rgba(30,58,95,0.12);
+    --red:     #DC2626;
+    --orange:  #D97706;
+    --blue:    #2563EB;
+    --green:   #059669;
+    --tier1:   #6B7280;
+    --tier2:   #2563EB;
+    --tier3:   #7C3AED;
+    --tier4:   #D97706;
+    --tierA:   #1E3A5F;
+    --radius:  8px;
+    --radius2: 12px;
+    --shadow:  0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow2: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg2);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+  /* ── LAYOUT ── */
+  .app { display: flex; height: 100vh; overflow: hidden; }
+
+  .sidebar {
+    width: 224px;
+    min-width: 224px;
+    background: var(--bg);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; background: var(--bg2); }
+
+  /* ── SIDEBAR ── */
+  .brand { padding: 22px 20px 18px; border-bottom: 1px solid var(--border); }
+  .brand-name { font-size: 17px; font-weight: 800; letter-spacing: 0.06em; color: var(--accent); text-transform: uppercase; }
+  .brand-sub { font-size: 11px; color: var(--text3); letter-spacing: 0.02em; margin-top: 2px; font-weight: 500; }
+
+  .nav { padding: 14px 10px; flex: 1; }
+  .nav-section { margin-bottom: 22px; }
+  .nav-label { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); padding: 4px 10px; margin-bottom: 3px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 10px; border-radius: var(--radius);
+    cursor: pointer; color: var(--text2); font-size: 13.5px; font-weight: 500;
+    transition: all 0.12s; border: none; background: none; width: 100%;
+    text-align: left; position: relative; text-decoration: none;
+  }
+  .nav-item:hover { background: var(--bg2); color: var(--text); }
+  .nav-item.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: 0; top: 4px; bottom: 4px;
+    width: 3px; background: var(--accent); border-radius: 0 2px 2px 0;
+  }
+  .nav-item .icon { width: 16px; text-align: center; font-size: 14px; flex-shrink: 0; opacity: 0.7; }
+  .nav-item.active .icon { opacity: 1; }
+  .nav-badge {
+    margin-left: auto; background: #FEF3C7; color: #92400E;
+    font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px;
+    min-width: 18px; text-align: center; border: 1px solid #FDE68A;
+  }
+  .nav-badge.red { background: #FEF2F2; color: #DC2626; border-color: #FECACA; }
+
+  .sidebar-footer { padding: 14px 20px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text3); font-weight: 500; }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    background: var(--bg); border-bottom: 1px solid var(--border);
+    padding: 0 28px; height: 60px; display: flex; align-items: center;
+    justify-content: space-between; flex-shrink: 0;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar-title { font-size: 16px; font-weight: 700; color: var(--text); }
+  .topbar-sub { font-size: 12px; color: var(--text3); margin-top: 1px; font-weight: 400; }
+  .topbar-right { display: flex; align-items: center; gap: 8px; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: var(--radius); border: none;
+    cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.12s;
+    white-space: nowrap; font-family: inherit; letter-spacing: 0.01em;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border2); box-shadow: var(--shadow); }
+  .btn-secondary:hover { background: var(--bg2); }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--bg2); color: var(--text); border-color: var(--border2); }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn-xs { padding: 3px 8px; font-size: 11px; }
+
+  /* ── CONTENT ── */
+  .content { padding: 28px; flex: 1; }
+
+  /* ── SECTION BLOCKS ── */
+  .section-block { margin-bottom: 32px; scroll-margin-top: 20px; }
+
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .section-title { font-size: 14px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .section-title .section-icon { font-size: 16px; }
+
+  /* ── STATS GRID ── */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px; margin-bottom: 16px;
+  }
+  .stats-grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .stats-grid-5 { grid-template-columns: repeat(5, 1fr); }
+
+  .stat-card {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius2); padding: 20px 22px;
+    box-shadow: var(--shadow); position: relative; overflow: hidden;
+  }
+  .stat-card::before {
+    content: ''; position: absolute; top: 0; left: 0; bottom: 0;
+    width: 3px; background: var(--border2);
+  }
+  .stat-card.accent::before { background: var(--accent); }
+  .stat-card.green::before { background: var(--green); }
+  .stat-card.orange::before { background: var(--orange); }
+  .stat-card.red::before { background: var(--red); }
+  .stat-card.blue::before { background: var(--blue); }
+
+  .stat-value {
+    font-size: 28px; font-weight: 800; line-height: 1;
+    color: var(--accent); margin-bottom: 6px; font-variant-numeric: tabular-nums;
+  }
+  .stat-value.green { color: var(--green); }
+  .stat-value.orange { color: var(--orange); }
+  .stat-value.red { color: var(--red); }
+  .stat-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+  .stat-delta { font-size: 11px; margin-top: 5px; color: var(--text3); }
+  .stat-delta.up { color: var(--green); font-weight: 600; }
+  .stat-delta.down { color: var(--red); font-weight: 600; }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius2); box-shadow: var(--shadow); overflow: hidden;
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+  }
+  .card-title { font-size: 13px; font-weight: 700; color: var(--text); }
+  .card-body { padding: 20px; }
+  .card-footer { padding: 12px 20px; border-top: 1px solid var(--border); background: var(--bg2); }
+
+  /* ── GRID LAYOUTS ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+  .grid-1-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 14px; }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap { margin-bottom: 14px; }
+  .progress-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .progress-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .progress-pct { font-size: 13px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .progress-bar { height: 8px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; background: var(--accent); transition: width 0.4s ease; }
+  .progress-fill.green { background: var(--green); }
+  .progress-fill.orange { background: var(--orange); }
+  .progress-fill.red { background: var(--red); }
+  .progress-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  /* ── BIG PROGRESS ── */
+  .big-progress {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius2); padding: 24px; box-shadow: var(--shadow);
+  }
+  .big-progress-top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; }
+  .big-progress-amount { font-size: 38px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1; }
+  .big-progress-goal { font-size: 13px; color: var(--text3); font-weight: 500; }
+  .big-progress-bar { height: 14px; background: var(--bg3); border-radius: 7px; overflow: hidden; margin-bottom: 10px; }
+  .big-progress-fill { height: 100%; border-radius: 7px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .big-progress-meta { display: flex; gap: 24px; }
+  .big-progress-stat { }
+  .big-progress-stat-val { font-size: 16px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+  .big-progress-stat-lbl { font-size: 11px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* ── PACE INDICATOR ── */
+  .pace-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700;
+  }
+  .pace-ahead { background: #ECFDF5; color: var(--green); border: 1px solid #A7F3D0; }
+  .pace-behind { background: #FEF2F2; color: var(--red); border: 1px solid #FECACA; }
+  .pace-on { background: #EFF6FF; color: var(--blue); border: 1px solid #BFDBFE; }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius2); overflow: hidden; box-shadow: var(--shadow);
+  }
+  .table-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+  }
+  .table-header-left { display: flex; align-items: center; gap: 12px; }
+  .table-count { font-size: 12px; color: var(--text3); font-weight: 500; }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: var(--bg2); border-bottom: 1px solid var(--border); }
+  th {
+    padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 700;
+    color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.08s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:nth-child(even) { background: #FAFBFD; }
+  tbody tr:hover { background: var(--accent-dim) !important; }
+  td { padding: 12px 16px; vertical-align: middle; font-size: 13px; }
+
+  /* ── TIER BADGES ── */
+  .tier-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700;
+  }
+  .tier-1 { background: #F3F4F6; color: var(--tier1); border: 1px solid #E5E7EB; }
+  .tier-2 { background: #EFF6FF; color: var(--tier2); border: 1px solid #BFDBFE; }
+  .tier-3 { background: #F5F3FF; color: var(--tier3); border: 1px solid #DDD6FE; }
+  .tier-4 { background: #FFFBEB; color: var(--tier4); border: 1px solid #FDE68A; }
+  .tier-A { background: #EFF6FF; color: var(--accent); border: 1px solid #93C5FD; font-weight: 800; }
+
+  /* ── STATUS BADGE ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  }
+  .badge-green { background: #ECFDF5; color: var(--green); border: 1px solid #A7F3D0; }
+  .badge-red { background: #FEF2F2; color: var(--red); border: 1px solid #FECACA; }
+  .badge-orange { background: #FFFBEB; color: var(--orange); border: 1px solid #FDE68A; }
+  .badge-blue { background: #EFF6FF; color: var(--blue); border: 1px solid #BFDBFE; }
+  .badge-navy { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(30,58,95,0.2); }
+  .badge-gray { background: #F3F4F6; color: var(--text2); border: 1px solid #E5E7EB; }
+
+  /* ── ROAS INDICATOR ── */
+  .roas-value { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .roas-good { color: var(--green); }
+  .roas-warn { color: var(--orange); }
+  .roas-bad  { color: var(--red); }
+
+  /* ── ALERT ITEMS ── */
+  .alert-list { display: flex; flex-direction: column; gap: 10px; }
+  .alert-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px; border-radius: var(--radius); border: 1px solid;
+  }
+  .alert-item.critical { background: #FEF2F2; border-color: #FECACA; }
+  .alert-item.warning  { background: #FFFBEB; border-color: #FDE68A; }
+  .alert-item.info     { background: #EFF6FF; border-color: #BFDBFE; }
+  .alert-item.success  { background: #ECFDF5; border-color: #A7F3D0; }
+  .alert-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .alert-body { flex: 1; }
+  .alert-title { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+  .alert-item.critical .alert-title { color: var(--red); }
+  .alert-item.warning  .alert-title { color: #92400E; }
+  .alert-item.info     .alert-title { color: var(--blue); }
+  .alert-item.success  .alert-title { color: var(--green); }
+  .alert-desc { font-size: 12px; color: var(--text2); }
+  .alert-time { font-size: 11px; color: var(--text3); margin-left: auto; white-space: nowrap; padding-left: 12px; }
+
+  /* ── METRIC ROW ── */
+  .metric-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .metric-row:last-child { border-bottom: none; }
+  .metric-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .metric-val { font-size: 15px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; text-align: right; }
+  .metric-delta { font-size: 11px; font-weight: 600; margin-top: 2px; text-align: right; }
+  .metric-delta.up { color: var(--green); }
+  .metric-delta.down { color: var(--red); }
+
+  /* ── SPARKLINE (CSS only) ── */
+  .spark-bar { display: flex; align-items: flex-end; gap: 3px; height: 32px; }
+  .spark-bar-item { flex: 1; border-radius: 2px 2px 0 0; background: var(--accent-dim2); min-width: 4px; }
+  .spark-bar-item.active { background: var(--accent); }
+
+  /* ── CHIP TABS ── */
+  .chip-tabs { display: flex; gap: 6px; }
+  .chip {
+    padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border2); background: var(--bg2);
+    color: var(--text2); transition: all 0.12s; user-select: none;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+  .chip.active { background: var(--accent-dim2); border-color: var(--accent); color: var(--accent); }
+
+  /* ── DIVIDER ── */
+  .divider { height: 1px; background: var(--border); margin: 18px 0; }
+
+  /* ── PRODUCT ROW ── */
+  .product-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .product-row:last-child { border-bottom: none; }
+  .product-rank { width: 22px; height: 22px; border-radius: 50%; background: var(--accent-dim); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--accent); flex-shrink: 0; }
+  .product-name { flex: 1; font-size: 13px; font-weight: 600; }
+  .product-sub { font-size: 11px; color: var(--text3); }
+  .product-vals { text-align: right; }
+  .product-rev { font-size: 14px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .product-units { font-size: 11px; color: var(--text3); }
+
+  /* ── INVENTORY ── */
+  .inv-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .inv-row:last-child { border-bottom: none; }
+  .inv-name { flex: 1; }
+  .inv-product { font-size: 13px; font-weight: 600; }
+  .inv-sku { font-size: 11px; color: var(--text3); }
+  .inv-stock { text-align: center; width: 60px; }
+  .inv-stock-val { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .inv-days { text-align: center; width: 60px; font-size: 12px; color: var(--text2); font-weight: 600; }
+  .inv-margin { text-align: center; width: 60px; font-size: 12px; font-weight: 700; color: var(--green); }
+  .inv-bar-wrap { width: 80px; }
+  .inv-bar { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+  .inv-bar-fill { height: 100%; border-radius: 3px; }
+
+  /* ── WEEK CALENDAR ── */
+  .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+  .day-col { }
+  .day-header {
+    text-align: center; padding: 10px 6px 8px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 8px;
+  }
+  .day-name { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); }
+  .day-date { font-size: 20px; font-weight: 800; line-height: 1.2; margin-top: 2px; color: var(--text); font-variant-numeric: tabular-nums; }
+  .day-header.today { border-color: var(--accent); border-width: 2px; }
+  .day-header.today .day-date { color: var(--accent); }
+  .cal-card {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 10px; cursor: pointer;
+    transition: all 0.12s; font-size: 12px; box-shadow: var(--shadow); margin-bottom: 6px;
+  }
+  .cal-card:hover { border-color: var(--accent); box-shadow: var(--shadow2); transform: translateY(-1px); }
+  .cal-card-icon { font-size: 18px; margin-bottom: 4px; text-align: center; }
+  .cal-card-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cal-card-meta { color: var(--text3); font-size: 11px; margin-top: 2px; }
+  .drop-zone {
+    border: 1.5px dashed var(--border2); border-radius: var(--radius);
+    padding: 12px; text-align: center; color: var(--text3);
+    font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.12s;
+  }
+  .drop-zone:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+  /* ── PDC TRACKER ── */
+  .pdc-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .pdc-row:last-child { border-bottom: none; }
+  .pdc-amb { display: flex; align-items: center; gap: 10px; width: 180px; flex-shrink: 0; }
+  .pdc-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent-dim2); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: var(--accent); flex-shrink: 0; }
+  .pdc-name { font-size: 13px; font-weight: 600; }
+  .pdc-handle { font-size: 11px; color: var(--text3); }
+  .pdc-goal-wrap { flex: 1; }
+  .pdc-goal-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+  .pdc-goal-val { font-weight: 700; color: var(--text2); }
+  .pdc-bar { height: 8px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
+  .pdc-fill { height: 100%; border-radius: 4px; background: var(--accent); }
+  .pdc-fill.over { background: var(--green); }
+  .pdc-fill.warn { background: var(--orange); }
+  .pdc-stats { display: flex; gap: 20px; flex-shrink: 0; }
+  .pdc-stat { text-align: center; }
+  .pdc-stat-val { font-size: 14px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .pdc-stat-lbl { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em; }
+
+  /* ── LTV/CAC ── */
+  .ltvcac-ring {
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    width: 120px; height: 120px; border-radius: 50%;
+    border: 8px solid var(--accent-dim2); background: var(--bg);
+    margin: 0 auto 14px;
+  }
+  .ltvcac-ring.good { border-color: rgba(5,150,105,0.2); }
+  .ltvcac-ring-val { font-size: 22px; font-weight: 800; color: var(--accent); line-height: 1; }
+  .ltvcac-ring.good .ltvcac-ring-val { color: var(--green); }
+  .ltvcac-ring-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text3); }
+
+  /* ── MISC ── */
+  .num { font-variant-numeric: tabular-nums; }
+  .text-right { text-align: right; }
+  .muted { color: var(--text3); }
+  .bold { font-weight: 700; }
+  .green { color: var(--green); }
+  .red { color: var(--red); }
+  .orange { color: var(--orange); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1100px) {
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    .stats-grid-5 { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 900px) {
+    .sidebar { width: 60px; min-width: 60px; }
+    .brand-name, .brand-sub { display: none; }
+    .nav-item span:not(.icon) { display: none; }
+    .nav-label, .nav-badge { display: none; }
+    .grid-2, .grid-2-1, .grid-1-2 { grid-template-columns: 1fr; }
+    .stats-grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .week-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  input[type="checkbox"] { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="brand">
+      <div class="brand-name">Obsidian</div>
+      <div class="brand-sub">Command Dashboard</div>
+    </div>
+    <div class="nav">
+      <div class="nav-section">
+        <div class="nav-label">Revenue</div>
+        <a class="nav-item active" href="#revenue">
+          <span class="icon">◈</span><span>Revenue Tracker</span>
+        </a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Performance</div>
+        <a class="nav-item" href="#ambassadors">
+          <span class="icon">◎</span><span>Ambassadors</span>
+        </a>
+        <a class="nav-item" href="#meta">
+          <span class="icon">▲</span><span>Meta Ads</span>
+          <span class="nav-badge red">!</span>
+        </a>
+        <a class="nav-item" href="#klaviyo">
+          <span class="icon">✉</span><span>Klaviyo</span>
+        </a>
+        <a class="nav-item" href="#shopify">
+          <span class="icon">⊡</span><span>Shopify</span>
+        </a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Operations</div>
+        <a class="nav-item" href="#inventory">
+          <span class="icon">▣</span><span>Inventory</span>
+          <span class="nav-badge red">3</span>
+        </a>
+        <a class="nav-item" href="#ltvcac">
+          <span class="icon">◉</span><span>LTV + CAC</span>
+        </a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Tools</div>
+        <a class="nav-item" href="#alerts">
+          <span class="icon">⚑</span><span>Alerts</span>
+          <span class="nav-badge red">4</span>
+        </a>
+        <a class="nav-item" href="#calendar">
+          <span class="icon">◫</span><span>Content Calendar</span>
+        </a>
+        <a class="nav-item" href="#pdc">
+          <span class="icon">◐</span><span>PDC Tracker</span>
+        </a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Pages</div>
+        <a class="nav-item" href="ambassador-cms.html">
+          <span class="icon">↗</span><span>Ambassador CMS</span>
+        </a>
+      </div>
+    </div>
+    <div class="sidebar-footer">v1.0 · Obsidian OS</div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div>
+          <div class="topbar-title">Command Dashboard</div>
+          <div class="topbar-sub">Live business overview · Updated just now</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-ghost btn-sm">⟳ Refresh</button>
+        <button class="btn btn-secondary btn-sm">↓ Export</button>
+        <button class="btn btn-primary btn-sm" onclick="window.location='ambassador-cms.html'">Ambassador CMS →</button>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- ═══════════════════════════════════════════════════ -->
+      <!-- 1. REVENUE TRACKER -->
+      <!-- ═══════════════════════════════════════════════════ -->
+      <div class="section-block" id="revenue">
+        <div class="section-header">
+          <div class="section-title"><span class="section-icon">◈</span> Revenue Tracker</div>
+          <div class="chip-tabs">
+            <div class="chip active">Daily</div>
+            <div class="chip">Weekly</div>
+            <div class="chip">Monthly</div>
+          </div>
+        </div>
+
+        <div class="grid-2-1" style="margin-bottom:14px">
+          <div class="big-progress">
+            <div class="big-progress-top">
+              <div>
+                <div class="big-progress-amount">$6,842</div>
+                <div class="big-progress-goal">of $10,000 monthly goal</div>
+              </div>
+              <span class="pace-badge pace-ahead">↑ 12% ahead of pace</span>
+            </div>
+            <div class="big-progress-bar">
+              <div class="big-progress-fill" style="width:68.4%"></div>
+            </div>
+            <div class="big-progress-meta">
+              <div class="big-progress-stat">
+                <div class="big-progress-stat-val">$341</div>
+                <div class="big-progress-stat-lbl">Today</div>
+              </div>
+              <div class="big-progress-stat">
+                <div class="big-progress-stat-val">$2,184</div>
+                <div class="big-progress-stat-lbl">This Week</div>
+              </div>
+              <div class="big-progress-stat">
+                <div class="big-progress-stat-val">21</div>
+                <div class="big-progress-stat-lbl">Days Left</div>
+              </div>
+              <div class="big-progress-stat">
+                <div class="big-progress-stat-val">$152/d</div>
+                <div class="big-progress-stat-lbl">Needed</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Daily Revenue</span><span class="badge badge-green">On Track</span></div>
+            <div class="card-body">
+              <div class="spark-bar" style="height:60px;margin-bottom:10px">
+                <div class="spark-bar-item" style="height:40%"></div>
+                <div class="spark-bar-item" style="height:60%"></div>
+                <div class="spark-bar-item" style="height:55%"></div>
+                <div class="spark-bar-item" style="height:80%"></div>
+                <div class="spark-bar-item" style="height:70%"></div>
+                <div class="spark-bar-item" style="height:90%"></div>
+                <div class="spark-bar-item active" style="height:100%"></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">Yesterday</div></div>
+                <div><div class="metric-val">$318</div><div class="metric-delta up">+8%</div></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">7-day avg</div></div>
+                <div><div class="metric-val">$290</div><div class="metric-delta up">+14%</div></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">Best day</div></div>
+                <div><div class="metric-val">$524</div><div class="metric-delta muted">Sat May 4</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-grid stats-grid-4">
+          <div class="stat-card accent">
+            <div class="stat-value">$341</div>
+            <div class="stat-label">Revenue Today</div>
+            <div class="stat-delta up">↑ 7% vs yesterday</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-value green">$2,184</div>
+            <div class="stat-label">This Week</div>
+            <div class="stat-delta up">↑ 18% vs last week</div>
+          </div>
+          <div class="stat-card accent">
+            <div class="stat-value">$6,842</div>
+            <div class="stat-label">Month to Date</div>
+            <div class="stat-delta up">↑ 23% vs last month</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-value green">68%</div>
+            <div class="stat-label">Goal Progress</div>
+            <div class="stat-delta up">↑ Ahead of pace</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════ -->
+      <!-- 2. AMBASSADOR PERFORMANCE -->
+      <!-- ═══════════════════════════════════════════════════ -->
+      <div class="section-block" id="ambassadors">
+        <div class="section-header">
+          <div class="section-title"><span class="section-icon">◎</span> Ambassador Performance</div>
+          <div class="chip-tabs">
+            <div class="chip active">24h</div>
+            <div class="chip">7d</div>
+            <div class="chip">30d</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="table-wrap">
+            <div class="table-header">
+              <div class="table-header-left">
+                <span class="card-title">Top Performers</span>
+                <span class="table-count">Last 24 hours</span>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Ambassador</th>
+                  <th>Tier</th>
+                  <th>Sales</th>
+                  <th>Commission</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="bold muted">1</td>
+                  <td>
+                    <div class="bold">@crystalbeauty</div>
+                    <div class="muted" style="font-size:11px">Crystal M.</div>
+                  </td>
+                  <td><span class="tier-badge tier-A">Elite</span></td>
+                  <td class="bold green">$284</td>
+                  <td class="bold">$28.40</td>
+                </tr>
+                <tr>
+                  <td class="bold muted">2</td>
+                  <td>
+                    <div class="bold">@glowwithgrace</div>
+                    <div class="muted" style="font-size:11px">Grace T.</div>
+                  </td>
+                  <td><span class="tier-badge tier-4">Gold</span></td>
+                  <td class="bold">$196</td>
+                  <td class="bold">$17.64</td>
+                </tr>
+                <tr>
+                  <td class="bold muted">3</td>
+                  <td>
+                    <div class="bold">@obsidianbabe</div>
+                    <div class="muted" style="font-size:11px">Jess R.</div>
+                  </td>
+                  <td><span class="tier-badge tier-3">Silver</span></td>
+                  <td class="bold">$142</td>
+                  <td class="bold">$11.36</td>
+                </tr>
+                <tr>
+                  <td class="bold muted">4</td>
+                  <td>
+                    <div class="bold">@makeupbymel</div>
+                    <div class="muted" style="font-size:11px">Mel V.</div>
+                  </td>
+                  <td><span class="tier-badge tier-2">Bronze</span></td>
+                  <td class="bold">$98</td>
+                  <td class="bold">$6.86</td>
+                </tr>
+                <tr>
+                  <td class="bold muted">5</td>
+                  <td>
+                    <div class="bold">@skinkare.soph</div>
+                    <div class="muted" style="font-size:11px">Sophie K.</div>
+                  </td>
+                  <td><span class="tier-badge tier-1">Member</span></td>
+                  <td class="bold">$74</td>
+                  <td class="bold">$4.44</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><span class="card-title">Tier Breakdown</span></div>
+            <div class="card-body">
+              <div class="progress-wrap">
+                <div class="progress-label">
+                  <span class="progress-name">Elite <span class="muted" style="font-weight:400">(3 ambassadors)</span></span>
+                  <span class="progress-pct">$1,240 / mo</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width:72%"></div></div>
+                <div class="progress-sub">Est. commission: $124/mo · 10%</div>
+              </div>
+              <div class="progress-wrap">
+                <div class="progress-label">
+                  <span class="progress-name">Gold <span class="muted" style="font-weight:400">(7 ambassadors)</span></span>
+                  <span class="progress-pct">$2,180 / mo</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width:88%"></div></div>
+                <div class="progress-sub">Est. commission: $196/mo · 9%</div>
+              </div>
+              <div class="progress-wrap">
+                <div class="progress-label">
+                  <span class="progress-name">Silver <span class="muted" style="font-weight:400">(14 ambassadors)</span></span>
+                  <span class="progress-pct">$1,860 / mo</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width:64%"></div></div>
+                <div class="progress-sub">Est. commission: $149/mo · 8%</div>
+              </div>
+              <div class="progress-wrap">
+                <div class="progress-label">
+                  <span class="progress-name">Bronze <span class="muted" style="font-weight:400">(22 ambassadors)</span></span>
+                  <span class="progress-pct">$940 / mo</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width:40%"></div></div>
+                <div class="progress-sub">Est. commission: $66/mo · 7%</div>
+              </div>
+              <div class="divider"></div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div>
+                  <div class="bold" style="font-size:13px">Total Est. Commission</div>
+                  <div class="muted" style="font-size:11px">46 active ambassadors</div>
+                </div>
+                <div class="stat-value" style="font-size:22px">$535/mo</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════ -->
+      <!-- 3. META ADS -->
+      <!-- ═══════════════════════════════════════════════════ -->
+      <div class="section-block" id="meta">
+        <div class="section-header">
+          <div class="section-title"><span class="section-icon">▲</span> Meta Ads</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="badge badge-red">1 Ad Below 2.0x ROAS</span>
+            <button class="btn btn-ghost btn-sm">View in Ads Manager</button>
+          </div>
+        </div>
+
+        <div class="stats-grid stats-grid-4" style="margin-bottom:14px">
+          <div class="stat-card accent">
+            <div class="stat-value">3.4x</div>
+            <div class="stat-label">Avg ROAS</div>
+            <div class="stat-delta up">↑ 0.3x vs last week</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="font-size:22px">$1,240</div>
+            <div class="stat-label">Total Ad Spend</div>
+            <div class="stat-delta">Last 7 days</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-value green" style="font-size:22px">$4,216</div>
+            <div class="stat-label">Ad Revenue</div>
+            <div class="stat-delta up">↑ 18% vs last week</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="font-size:22px">2.4%</div>
+            <div class="stat-label">Avg CTR</div>
+            <div class="stat-delta up">↑ 0.2% vs last week</div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-header-left">
+              <span class="card-title">Ad Performance</span>
+              <span class="table-count">6 active ads</span>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Ad Name</th>
+                <th>Campaign</th>
+                <th>Spend</th>
+                <th>Revenue</th>
+                <th>ROAS</th>
+                <th>CTR</th>
+                <th>CPC</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div class="bold">Crystal Serum — UGC 1</div><div class="muted" style="font-size:11px">Video · 15s</div></td>
+                <td>TOFU Awareness</td>
+                <td class="num">$320</td>
+                <td class="bold num green">$1,408</td>
+                <td><span class="roas-value roas-good">4.4x</span></td>
+                <td class="num">3.1%</td>
+                <td class="num">$0.84</td>
+                <td><span class="badge badge-green">Active</span></td>
+              </tr>
+              <tr>
+                <td><div class="bold">Glow Bundle — Lifestyle</div><div class="muted" style="font-size:11px">Image · Carousel</div></td>
+                <td>Retargeting</td>
+                <td class="num">$280</td>
+                <td class="bold num green">$1,092</td>
+                <td><span class="roas-value roas-good">3.9x</span></td>
+                <td class="num">2.8%</td>
+                <td class="num">$0.97</td>
+                <td><span class="badge badge-green">Active</span></td>
+              </tr>
+              <tr>
+                <td><div class="bold">Ambassador Story — @glowwithgrace</div><div class="muted" style="font-size:11px">Story · 30s</div></td>
+                <td>TOFU Awareness</td>
+                <td class="num">$210</td>
+                <td class="bold num green">$756</td>
+                <td><span class="roas-value roas-good">3.6x</span></td>
+                <td class="num">2.4%</td>
+                <td class="num">$1.10</td>
+                <td><span class="badge badge-green">Active</span></td>
+              </tr>
+              <tr>
+                <td><div class="bold">Product Demo — Before/After</div><div class="muted" style="font-size:11px">Video · 30s</div></td>
+                <td>MOFU Consideration</td>
+                <td class="num">$190</td>
+                <td class="bold num">$494</td>
+                <td><span class="roas-value roas-warn">2.6x</span></td>
+                <td class="num">1.9%</td>
+                <td class="num">$1.42</td>
+                <td><span class="badge badge-orange">Review</span></td>
+              </tr>
+              <tr>
+                <td><div class="bold">New Arrivals — Static</div><div class="muted" style="font-size:11px">Image · Single</div></td>
+                <td>BOFU Conversion</td>
+                <td class="num">$140</td>
+                <td class="bold num">$308</td>
+                <td><span class="roas-value roas-warn">2.2x</span></td>
+                <td class="num">1.7%</td>
+                <td class="num">$1.68</td>
+                <td><span class="badge badge-orange">Review</span></td>
+              </tr>
+              <tr style="background:#FEF2F2">
+                <td><div class="bold">Discount Code — Generic</div><div class="muted" style="font-size:11px">Image · Single</div></td>
+                <td>BOFU Conversion</td>
+                <td class="num">$100</td>
+                <td class="bold num red">$158</td>
+                <td><span class="roas-value roas-bad">1.6x ⚠</span></td>
+                <td class="num">1.1%</td>
+                <td class="num">$2.41</td>
+                <td><span class="badge badge-red">Below 2.0x</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════ -->
+      <!-- 4. KLAVIYO -->
+      <!-- ═══════════════════════════════════════════════════ -->
+      <div class="section-block" id="klaviyo">
+        <div class="section-header">
+          <div class="section-title"><span class="section-icon">✉</span> Klaviyo — Email & SMS</div>
+          <button class="btn btn-ghost btn-sm">Open Klaviyo →</button>
+        </div>
+
+        <div class="stats-grid stats-grid-5" style="margin-bottom:14px">
+          <div class="stat-card accent">
+            <div class="stat-value">41%</div>
+            <div class="stat-label">Email Open Rate</div>
+            <div class="stat-delta up">↑ 4% vs avg</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-value green">6.8%</div>
+            <div class="stat-label">Email Click Rate</div>
+            <div class="stat-delta up">↑ 1.2% vs avg</div>
+          </div>
+          <div class="stat-card accent">
+            <div class="stat-value">18%</div>
+            <div class="stat-label">SMS Open Rate</div>
+            <div class="stat-delta">Industry avg: 22%</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="font-size:22px">4,218</div>
+            <div class="stat-label">Active Subscribers</div>
+            <div class="stat-delta up">+142 this month</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-value green" style="font-size:22px">$1,840</div>
+            <div class="stat-label">Email Revenue (30d)</div>
+            <div class="stat-delta up">↑ 22% vs last mo</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="table-wrap">
+            <div class="table-header">
+              <div class="table-header-left">
+                <span class="card-title">Top Flows</span>
+                <span class="table-count">Last 30 days</span>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Flow</th>
+                  <th>Sent</th>
+                  <th>Open %</th>
+                  <th>Click %</th>
+                  <th>Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><div class="bold">Welcome Series</div><div class="muted" style="font-size:11px">Email · 5 steps</div></td>
+                  <td class="num">842</td>
+                  <td class="bold green num">58%</td>
+                  <td class="bold num">12.4%</td>
+                  <td class="bold green num">$624</td>
+                </tr>
+                <tr>
+                  <td><div class="bold">Abandoned Cart</div><div class="muted" style="font-size:11px">Email + SMS · 3 steps</div></td>
+                  <td class="num">318</td>
+                  <td class="bold green num">52%</td>
+                  <td class="bold num">9.8%</td>
+                  <td class="bold green num">$418</td>
+                </tr>
+                <tr>
+                  <td><div class="bold">Post-Purchase</div><div class="muted" style="font-size:11px">Email · 4 steps</div></td>
+                  <td class="num">624</td>
+                  <td class="num">44%</td>
+                  <td class="num">7.2%</td>
+                  <td class="bold num">$312</td>
+                </tr>
+                <tr>
+                  <td><div class="bold">Win-Back</div><div class="muted" style="font-size:11px">Email · 3 steps</div></td>
+                  <td class="num">180</td>
+                  <td class="num">28%</td>
+                  <td class="num">4.1%</td>
+                  <td class="num">$148</td>
+                </tr>
+                <tr>
+                  <td><div class="bold">VIP Early Access</div><div class="muted" style="font-size:11px">Email · 2 steps</div></td>
+                  <td class="num">96</td>
+                  <td class="bold green num">71%</td>
+                  <td class="bold num">18.6%</td>
+                  <td class="bold green num">$338</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><span class="card-title">LTV by Segment</span></div>
+            <div class="card-body">
+              <div class="metric-row">
+                <div><div class="metric-name">Email VIP Subscribers</div><div class="metric-sub">Opened ≥5 emails</div></div>
+                <div><div class="metric-val">$186</div><div class="metric-delta up">+42% vs avg</div></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">SMS Opted-In</div><div class="metric-sub">Active SMS list</div></div>
+                <div><div class="metric-val">$142</div><div class="metric-delta up">+18% vs avg</div></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">Ambassador Referrals</div><div class="metric-sub">Acquired via code</div></div>
+                <div><div class="metric-val">$163</div><div class="metric-delta up">+31% vs avg</div></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">Paid Ad Customers</div><div class="metric-sub">First touch Meta</div></div>
+                <div><div class="metric-val">$108</div><div class="metric-delta">Near avg</div></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">Organic / Direct</div><div class="metric-sub">No attribution</div></div>
+                <div><div class="metric-val">$131</div><div class="metric-delta up">+6% vs avg</div></div>
+              </div>
+              <div class="divider"></div>
+              <div class="metric-row">
+                <div><div class="metric-name bold">All Customers Avg LTV</div></div>
+                <div><div class="metric-val" style="font-size:18px">$124</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════ -->
+      <!-- 5. SHOPIFY -->
+      <!-- ═══════════════════════════════════════════════════ -->
+      <div class="section-block" id="shopify">
+        <div class="section-header">
+          <div class="section-title"><span class="section-icon">⊡</span> Shopify</div>
+          <button class="btn btn-ghost btn-sm">Open Shopify →</button>
+        </div>
+
+        <div class="stats-grid stats-grid-4" style="margin-bottom:14px">
+          <div class="stat-card accent">
+            <div class="stat-value">$341</div>
+            <div class="stat-label">Daily Sales</div>
+            <div class="stat-delta up">↑ 7% vs yesterday</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="font-size:22px">2.4%</div>
+            <div class="stat-label">Store CTR</div>
+            <div class="stat-delta up">↑ 0.3% vs avg</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-value green" style="font-size:22px">3.8%</div>
+            <div class="stat-label">Conversion Rate</div>
+            <div class="stat-delta up">↑ 0.6% vs avg</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="font-size:22px">$48</div>
+            <div class="stat-label">Avg Order Value</div>
+            <div class="stat-delta up">↑ $4 vs last month</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Best Selling Products</span><span class="muted" style="font-size:12px">Last 7 days</span></div>
+            <div class="card-body">
+              <div class="product-row">
+                <div class="product-rank">1</div>
+                <div class="product-name">Crystal Serum 30ml<div class="product-sub">SKU-001 · Skincare</div></div>
+                <div class="product-vals"><div class="product-rev">$1,248</div><div class="product-units">26 units</div></div>
+              </div>
+              <div class="product-row">
+                <div class="product-rank">2</div>
+                <div class="product-name">Glow Bundle Kit<div class="product-sub">SKU-004 · Bundle</div></div>
+                <div class="product-vals"><div class="product-rev">$960</div><div class="product-units">16 units</div></div>
+              </div>
+              <div class="product-row">
+                <div class="product-rank">3</div>
+                <div class="product-name">Obsidian Eye Cream<div class="product-sub">SKU-002 · Eye Care</div></div>
+                <div class="product-vals"><div class="product-rev">$742</div><div class="product-units">19 units</div></div>
+              </div>
+              <div class="product-row">
+                <div class="product-rank">4</div>
+                <div class="product-name">Clarity Toner 100ml<div class="product-sub">SKU-003 · Toners</div></div>
+                <div class="product-vals"><div class="product-rev">$588</div><div class="product-units">21 units</div></div>
+              </div>
+              <div class="product-row">
+                <div class="product-rank">5</div>
+                <div class="product-name">Hydra Mask Set<div class="product-sub">SKU-007 · Masks</div></div>
+                <div class="product-vals"><div class="product-rev">$432</div><div class="product-units">12 units</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><span class="card-title">Traffic & Conversion</span></div>
+            <div class="card-body">
+              <div class="metric-row">
+                <div><div class="metric-name">Sessions Today</div><div class="metric-sub">Unique visitors</div></div>
+                <div><div class="metric-val">1,420</div><div class="metric-delta up">+8%</div></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">Bounce Rate</div><div class="metric-sub">Single-page exits</div></div>
+                <div><div class="metric-val">52%</div><div class="metric-delta down">↑ 2% (worse)</div></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">Add to Cart Rate</div></div>
+                <div><div class="metric-val">12.4%</div><div class="metric-delta up">+1.1%</div></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">Checkout Rate</div></div>
+                <div><div class="metric-val">6.2%</div><div class="metric-delta up">+0.4%</div></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">Conversion Rate</div></div>
+                <div><div class="metric-val">3.8%</div><div class="metric-delta up">↑ 0.6%</div></div>
+              </div>
+              <div class="divider"></div>
+              <div class="metric-row">
+                <div><div class="metric-name bold">Orders Today</div></div>
+                <div><div class="metric-val" style="font-size:18px">54</div><div class="metric-delta up">+7 vs yesterday</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════ -->
+      <!-- 6. INVENTORY -->
+      <!-- ═══════════════════════════════════════════════════ -->
+      <div class="section-block" id="inventory">
+        <div class="section-header">
+          <div class="section-title"><span class="section-icon">▣</span> Inventory</div>
+          <span class="badge badge-red">3 items need reorder within 60 days</span>
+        </div>
+
+        <div class="stats-grid stats-grid-4" style="margin-bottom:14px">
+          <div class="stat-card accent">
+            <div class="stat-value">12</div>
+            <div class="stat-label">Total SKUs</div>
+            <div class="stat-delta">4 variants active</div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-value red">3</div>
+            <div class="stat-label">Reorder Alerts</div>
+            <div class="stat-delta down">≤60 days remaining</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-value green">68%</div>
+            <div class="stat-label">Avg Profit Margin</div>
+            <div class="stat-delta up">↑ 3% vs last quarter</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="font-size:22px">$18,400</div>
+            <div class="stat-label">Inventory Value</div>
+            <div class="stat-delta">At cost</div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-header-left">
+              <span class="card-title">Stock Levels</span>
+              <span class="table-count">All SKUs</span>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>SKU</th>
+                <th>In Stock</th>
+                <th>Days Left</th>
+                <th>Daily Velocity</th>
+                <th>Reorder Qty</th>
+                <th>Margin</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div class="bold">Crystal Serum 30ml</div></td>
+                <td class="muted num">SKU-001</td>
+                <td><span class="bold green num">248</span></td>
+                <td class="num bold">95d</td>
+                <td class="num muted">2.6/day</td>
+                <td class="num">300</td>
+                <td class="bold green">72%</td>
+                <td><span class="badge badge-green">Healthy</span></td>
+              </tr>
+              <tr>
+                <td><div class="bold">Obsidian Eye Cream</div></td>
+                <td class="muted num">SKU-002</td>
+                <td><span class="bold num">142</span></td>
+                <td class="num bold">74d</td>
+                <td class="num muted">1.9/day</td>
+                <td class="num">200</td>
+                <td class="bold green">68%</td>
+                <td><span class="badge badge-green">Healthy</span></td>
+              </tr>
+              <tr>
+                <td><div class="bold">Clarity Toner 100ml</div></td>
+                <td class="muted num">SKU-003</td>
+                <td><span class="bold orange num">84</span></td>
+                <td class="num bold orange">40d</td>
+                <td class="num muted">2.1/day</td>
+                <td class="num">250</td>
+                <td class="bold green">65%</td>
+                <td><span class="badge badge-orange">Reorder Soon</span></td>
+              </tr>
+              <tr>
+                <td><div class="bold">Glow Bundle Kit</div></td>
+                <td class="muted num">SKU-004</td>
+                <td><span class="bold orange num">56</span></td>
+                <td class="num bold orange">35d</td>
+                <td class="num muted">1.6/day</td>
+                <td class="num">100</td>
+                <td class="bold green">74%</td>
+                <td><span class="badge badge-orange">Reorder Soon</span></td>
+              </tr>
+              <tr style="background:#FEF2F2">
+                <td><div class="bold">Hydra Mask Set</div></td>
+                <td class="muted num">SKU-007</td>
+                <td><span class="bold red num">22</span></td>
+                <td class="num bold red">18d</td>
+                <td class="num muted">1.2/day</td>
+                <td class="num">150</td>
+                <td class="bold green">61%</td>
+                <td><span class="badge badge-red">Critical</span></td>
+              </tr>
+              <tr>
+                <td><div class="bold">Repair Night Cream</div></td>
+                <td class="muted num">SKU-005</td>
+                <td><span class="bold green num">310</span></td>
+                <td class="num bold">112d</td>
+                <td class="num muted">2.8/day</td>
+                <td class="num">350</td>
+                <td class="bold green">71%</td>
+                <td><span class="badge badge-green">Healthy</span></td>
+              </tr>
+              <tr>
+                <td><div class="bold">SPF Moisture Shield</div></td>
+                <td class="muted num">SKU-006</td>
+                <td><span class="bold num">188</span></td>
+                <td class="num bold">88d</td>
+                <td class="num muted">2.1/day</td>
+                <td class="num">200</td>
+                <td class="bold green">69%</td>
+                <td><span class="badge badge-green">Healthy</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════ -->
+      <!-- 7. LTV + CAC -->
+      <!-- ═══════════════════════════════════════════════════ -->
+      <div class="section-block" id="ltvcac">
+        <div class="section-header">
+          <div class="section-title"><span class="section-icon">◉</span> LTV + CAC Analysis</div>
+          <span class="badge badge-green">Healthy 3.8x LTV:CAC Ratio</span>
+        </div>
+
+        <div class="stats-grid stats-grid-4" style="margin-bottom:14px">
+          <div class="stat-card accent">
+            <div class="stat-value">$124</div>
+            <div class="stat-label">Avg Customer LTV</div>
+            <div class="stat-delta up">↑ $12 vs last quarter</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="font-size:22px">$33</div>
+            <div class="stat-label">Avg CAC (blended)</div>
+            <div class="stat-delta down">↑ $2 vs last quarter</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-value green">3.8x</div>
+            <div class="stat-label">LTV : CAC Ratio</div>
+            <div class="stat-delta up">Target ≥ 3.0x ✓</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-value green" style="font-size:22px">$18</div>
+            <div class="stat-label">Referral CAC</div>
+            <div class="stat-delta up">45% cheaper than paid</div>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-header"><span class="card-title">LTV by Channel</span></div>
+            <div class="card-body">
+              <div class="metric-row">
+                <div><div class="metric-name">Email/SMS</div></div>
+                <div><div class="metric-val">$186</div><div class="metric-delta up">Best channel</div></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">Ambassador Referral</div></div>
+                <div><div class="metric-val">$163</div><div class="metric-delta up">+31%</div></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">Organic / SEO</div></div>
+                <div><div class="metric-val">$131</div><div class="metric-delta up">+6%</div></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">Meta Ads</div></div>
+                <div><div class="metric-val">$108</div><div class="metric-delta">Avg</div></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">TikTok</div></div>
+                <div><div class="metric-val">$94</div><div class="metric-delta down">-15%</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><span class="card-title">CAC by Channel</span></div>
+            <div class="card-body">
+              <div class="metric-row">
+                <div><div class="metric-name">Ambassador Referral</div></div>
+                <div><div class="metric-val green">$18</div><div class="metric-delta up">Lowest CAC</div></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">Organic / SEO</div></div>
+                <div><div class="metric-val green">$22</div><div class="metric-delta up">-33% vs paid</div></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">Email Marketing</div></div>
+                <div><div class="metric-val">$28</div><div class="metric-delta">Near avg</div></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">Meta Ads</div></div>
+                <div><div class="metric-val">$33</div><div class="metric-delta">Blended avg</div></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">TikTok Ads</div></div>
+                <div><div class="metric-val orange">$41</div><div class="metric-delta down">+24% vs avg</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><span class="card-title">Referral ROI</span></div>
+            <div class="card-body">
+              <div style="text-align:center;margin-bottom:18px">
+                <div class="ltvcac-ring good">
+                  <div class="ltvcac-ring-val">9.1x</div>
+                  <div class="ltvcac-ring-lbl">ROI</div>
+                </div>
+                <div class="muted" style="font-size:12px">Ambassador program return</div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">Commission Paid (30d)</div></div>
+                <div><div class="metric-val">$535</div></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">Revenue Driven (30d)</div></div>
+                <div><div class="metric-val green">$4,870</div></div>
+              </div>
+              <div class="metric-row">
+                <div><div class="metric-name">Net Program Profit</div></div>
+                <div><div class="metric-val green">$4,335</div></div>
+              </div>
+              <div class="divider"></div>
+              <div class="metric-row">
+                <div><div class="metric-name bold">Referral CAC</div></div>
+                <div><div class="metric-val" style="font-size:18px;color:var(--green)">$18</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════ -->
+      <!-- 8. ALERTS PANEL -->
+      <!-- ═══════════════════════════════════════════════════ -->
+      <div class="section-block" id="alerts">
+        <div class="section-header">
+          <div class="section-title"><span class="section-icon">⚑</span> Alerts Panel</div>
+          <div style="display:flex;gap:8px">
+            <span class="badge badge-red">2 Critical</span>
+            <span class="badge badge-orange">2 Warnings</span>
+            <span class="badge badge-green">3 Wins</span>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);margin-bottom:10px">Critical & Warnings</div>
+            <div class="alert-list">
+              <div class="alert-item critical">
+                <div class="alert-icon">🔴</div>
+                <div class="alert-body">
+                  <div class="alert-title">Low Stock: Hydra Mask Set</div>
+                  <div class="alert-desc">Only 22 units remain — 18 days at current velocity. Reorder 150 units immediately to avoid stockout.</div>
+                </div>
+                <div class="alert-time">2h ago</div>
+              </div>
+              <div class="alert-item critical">
+                <div class="alert-icon">🔴</div>
+                <div class="alert-body">
+                  <div class="alert-title">ROAS Alert: "Discount Code — Generic" ad</div>
+                  <div class="alert-desc">ROAS dropped to 1.6x (below 2.0x threshold). Pause or revise creative immediately. Wasting $100/week.</div>
+                </div>
+                <div class="alert-time">4h ago</div>
+              </div>
+              <div class="alert-item warning">
+                <div class="alert-icon">🟡</div>
+                <div class="alert-body">
+                  <div class="alert-title">Reorder Alert: Clarity Toner 100ml</div>
+                  <div class="alert-desc">40 days of stock remaining. Place reorder within 2 weeks to maintain buffer. Suggest 250 units.</div>
+                </div>
+                <div class="alert-time">6h ago</div>
+              </div>
+              <div class="alert-item warning">
+                <div class="alert-icon">🟡</div>
+                <div class="alert-body">
+                  <div class="alert-title">Revenue Pace: Needs $152/day</div>
+                  <div class="alert-desc">To hit $10K by month end, daily revenue must average $152. Currently averaging $341 — 12% above needed pace.</div>
+                </div>
+                <div class="alert-time">Today</div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);margin-bottom:10px">Wins & Opportunities</div>
+            <div class="alert-list">
+              <div class="alert-item success">
+                <div class="alert-icon">🟢</div>
+                <div class="alert-body">
+                  <div class="alert-title">Crystal Serum ROAS hit 4.4x!</div>
+                  <div class="alert-desc">Best performing ad this week. Consider increasing budget by 30% to scale results. +$1,408 this week.</div>
+                </div>
+                <div class="alert-time">1h ago</div>
+              </div>
+              <div class="alert-item success">
+                <div class="alert-icon">🟢</div>
+                <div class="alert-body">
+                  <div class="alert-title">@crystalbeauty hit $284 in 24h</div>
+                  <div class="alert-desc">Top ambassador performance. Consider reaching out for dedicated campaign collab or tier upgrade bonus.</div>
+                </div>
+                <div class="alert-time">3h ago</div>
+              </div>
+              <div class="alert-item success">
+                <div class="alert-icon">🟢</div>
+                <div class="alert-body">
+                  <div class="alert-title">Email Welcome Flow: 58% open rate</div>
+                  <div class="alert-desc">Well above industry average (21%). Welcome series generated $624 this month. Replicate format in other flows.</div>
+                </div>
+                <div class="alert-time">Today</div>
+              </div>
+              <div class="alert-item info">
+                <div class="alert-icon">🔵</div>
+                <div class="alert-body">
+                  <div class="alert-title">Conversion rate up 0.6% this week</div>
+                  <div class="alert-desc">Store CVR at 3.8%, best since launch. Review what changed this week (new PDPs, pricing, offers).</div>
+                </div>
+                <div class="alert-time">Today</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════ -->
+      <!-- 9. CONTENT CALENDAR -->
+      <!-- ═══════════════════════════════════════════════════ -->
+      <div class="section-block" id="calendar">
+        <div class="section-header">
+          <div class="section-title"><span class="section-icon">◫</span> Content Calendar — This Week</div>
+          <div style="display:flex;gap:8px">
+            <a href="ambassador-cms.html" class="btn btn-primary btn-sm">Open Ambassador CMS →</a>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-header">
+            <span class="card-title">May 11 – May 17, 2026</span>
+            <div style="display:flex;gap:6px">
+              <span class="badge badge-green">3 Live</span>
+              <span class="badge badge-orange">4 Scheduled</span>
+              <span class="badge badge-blue">2 In Review</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="week-grid">
+              <div class="day-col">
+                <div class="day-header today"><div class="day-name">Mon</div><div class="day-date">11</div></div>
+                <div class="cal-card" onclick="window.location='ambassador-cms.html'">
+                  <div class="cal-card-icon">💎</div>
+                  <div class="cal-card-name">Crystal Serum Drop</div>
+                  <div class="cal-card-meta">@crystalbeauty</div>
+                  <div style="margin-top:6px"><span class="badge badge-green" style="font-size:10px">Live</span></div>
+                </div>
+                <div class="cal-card" onclick="window.location='ambassador-cms.html'">
+                  <div class="cal-card-icon">✨</div>
+                  <div class="cal-card-name">Morning Routine</div>
+                  <div class="cal-card-meta">@glowwithgrace</div>
+                  <div style="margin-top:6px"><span class="badge badge-green" style="font-size:10px">Live</span></div>
+                </div>
+              </div>
+              <div class="day-col">
+                <div class="day-header"><div class="day-name">Tue</div><div class="day-date">12</div></div>
+                <div class="cal-card" onclick="window.location='ambassador-cms.html'">
+                  <div class="cal-card-icon">📦</div>
+                  <div class="cal-card-name">Unboxing Reel</div>
+                  <div class="cal-card-meta">@obsidianbabe</div>
+                  <div style="margin-top:6px"><span class="badge badge-orange" style="font-size:10px">Scheduled</span></div>
+                </div>
+                <div class="drop-zone">+ Schedule</div>
+              </div>
+              <div class="day-col">
+                <div class="day-header"><div class="day-name">Wed</div><div class="day-date">13</div></div>
+                <div class="cal-card" onclick="window.location='ambassador-cms.html'">
+                  <div class="cal-card-icon">🌙</div>
+                  <div class="cal-card-name">Night Routine</div>
+                  <div class="cal-card-meta">@makeupbymel</div>
+                  <div style="margin-top:6px"><span class="badge badge-blue" style="font-size:10px">In Review</span></div>
+                </div>
+                <div class="drop-zone">+ Schedule</div>
+              </div>
+              <div class="day-col">
+                <div class="day-header"><div class="day-name">Thu</div><div class="day-date">14</div></div>
+                <div class="cal-card" onclick="window.location='ambassador-cms.html'">
+                  <div class="cal-card-icon">💫</div>
+                  <div class="cal-card-name">Before/After TikTok</div>
+                  <div class="cal-card-meta">@skinkare.soph</div>
+                  <div style="margin-top:6px"><span class="badge badge-orange" style="font-size:10px">Scheduled</span></div>
+                </div>
+                <div class="drop-zone">+ Schedule</div>
+              </div>
+              <div class="day-col">
+                <div class="day-header"><div class="day-name">Fri</div><div class="day-date">15</div></div>
+                <div class="cal-card" onclick="window.location='ambassador-cms.html'">
+                  <div class="cal-card-icon">🎁</div>
+                  <div class="cal-card-name">Gift Guide Post</div>
+                  <div class="cal-card-meta">@crystalbeauty</div>
+                  <div style="margin-top:6px"><span class="badge badge-orange" style="font-size:10px">Scheduled</span></div>
+                </div>
+                <div class="drop-zone">+ Schedule</div>
+              </div>
+              <div class="day-col">
+                <div class="day-header"><div class="day-name">Sat</div><div class="day-date">16</div></div>
+                <div class="cal-card" onclick="window.location='ambassador-cms.html'">
+                  <div class="cal-card-icon">🌟</div>
+                  <div class="cal-card-name">Weekend Glow Story</div>
+                  <div class="cal-card-meta">@glowwithgrace</div>
+                  <div style="margin-top:6px"><span class="badge badge-green" style="font-size:10px">Live</span></div>
+                </div>
+                <div class="drop-zone">+ Schedule</div>
+              </div>
+              <div class="day-col">
+                <div class="day-header"><div class="day-name">Sun</div><div class="day-date">17</div></div>
+                <div class="cal-card" onclick="window.location='ambassador-cms.html'">
+                  <div class="cal-card-icon">🧴</div>
+                  <div class="cal-card-name">Sunday Reset Reel</div>
+                  <div class="cal-card-meta">@obsidianbabe</div>
+                  <div style="margin-top:6px"><span class="badge badge-blue" style="font-size:10px">In Review</span></div>
+                </div>
+                <div class="drop-zone">+ Schedule</div>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer" style="display:flex;align-items:center;justify-content:space-between">
+            <div class="muted" style="font-size:12px">Click any card to manage in Ambassador CMS</div>
+            <a href="ambassador-cms.html" class="btn btn-ghost btn-sm">View Full Calendar →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════ -->
+      <!-- 10. PDC TRACKER -->
+      <!-- ═══════════════════════════════════════════════════ -->
+      <div class="section-block" id="pdc">
+        <div class="section-header">
+          <div class="section-title"><span class="section-icon">◐</span> PDC Tracker — Ambassador Goals vs Actuals</div>
+          <div class="chip-tabs">
+            <div class="chip active">This Month</div>
+            <div class="chip">Last Month</div>
+            <div class="chip">All Time</div>
+          </div>
+        </div>
+
+        <div class="stats-grid stats-grid-4" style="margin-bottom:14px">
+          <div class="stat-card green">
+            <div class="stat-value green">18</div>
+            <div class="stat-label">Ambassadors On Track</div>
+            <div class="stat-delta up">39% of total</div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-value orange" style="font-size:22px">22</div>
+            <div class="stat-label">Below Goal</div>
+            <div class="stat-delta down">48% of total</div>
+          </div>
+          <div class="stat-card accent">
+            <div class="stat-value">6</div>
+            <div class="stat-label">Exceeded Goal</div>
+            <div class="stat-delta up">13% of total</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="font-size:22px">$4,870</div>
+            <div class="stat-label">Total Program Revenue</div>
+            <div class="stat-delta up">vs $4,000 goal</div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-header-left">
+              <span class="card-title">Individual Goals vs Actuals</span>
+              <span class="table-count">Top 10 ambassadors</span>
+            </div>
+          </div>
+          <div style="padding:0 0 4px">
+            <div style="padding:0 20px">
+              <div class="pdc-row" style="border-bottom:1px solid var(--border);padding:10px 0">
+                <div style="width:180px;flex-shrink:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3)">Ambassador</div>
+                <div style="flex:1;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3)">Monthly Progress</div>
+                <div style="display:flex;gap:20px;flex-shrink:0">
+                  <div style="width:55px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3)">Actual</div>
+                  <div style="width:55px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3)">Goal</div>
+                  <div style="width:55px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3)">Posts</div>
+                  <div style="width:55px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3)">Status</div>
+                </div>
+              </div>
+
+              <!-- PDC Row 1 -->
+              <div class="pdc-row">
+                <div class="pdc-amb">
+                  <div class="pdc-avatar">CM</div>
+                  <div><div class="pdc-name">Crystal M.</div><div class="pdc-handle">@crystalbeauty</div></div>
+                </div>
+                <div class="pdc-goal-wrap">
+                  <div class="pdc-goal-label">
+                    <span>$0</span><span class="pdc-goal-val">$1,400 / $1,000</span>
+                  </div>
+                  <div class="pdc-bar"><div class="pdc-fill over" style="width:100%"></div></div>
+                </div>
+                <div class="pdc-stats">
+                  <div class="pdc-stat"><div class="pdc-stat-val green">$1,400</div><div class="pdc-stat-lbl">Actual</div></div>
+                  <div class="pdc-stat"><div class="pdc-stat-val">$1,000</div><div class="pdc-stat-lbl">Goal</div></div>
+                  <div class="pdc-stat"><div class="pdc-stat-val">12</div><div class="pdc-stat-lbl">Posts</div></div>
+                  <div class="pdc-stat"><span class="badge badge-green" style="font-size:10px">+140%</span></div>
+                </div>
+              </div>
+
+              <!-- PDC Row 2 -->
+              <div class="pdc-row">
+                <div class="pdc-amb">
+                  <div class="pdc-avatar">GT</div>
+                  <div><div class="pdc-name">Grace T.</div><div class="pdc-handle">@glowwithgrace</div></div>
+                </div>
+                <div class="pdc-goal-wrap">
+                  <div class="pdc-goal-label">
+                    <span>$0</span><span class="pdc-goal-val">$980 / $800</span>
+                  </div>
+                  <div class="pdc-bar"><div class="pdc-fill over" style="width:100%"></div></div>
+                </div>
+                <div class="pdc-stats">
+                  <div class="pdc-stat"><div class="pdc-stat-val green">$980</div><div class="pdc-stat-lbl">Actual</div></div>
+                  <div class="pdc-stat"><div class="pdc-stat-val">$800</div><div class="pdc-stat-lbl">Goal</div></div>
+                  <div class="pdc-stat"><div class="pdc-stat-val">9</div><div class="pdc-stat-lbl">Posts</div></div>
+                  <div class="pdc-stat"><span class="badge badge-green" style="font-size:10px">+123%</span></div>
+                </div>
+              </div>
+
+              <!-- PDC Row 3 -->
+              <div class="pdc-row">
+                <div class="pdc-amb">
+                  <div class="pdc-avatar">JR</div>
+                  <div><div class="pdc-name">Jess R.</div><div class="pdc-handle">@obsidianbabe</div></div>
+                </div>
+                <div class="pdc-goal-wrap">
+                  <div class="pdc-goal-label">
+                    <span>$0</span><span class="pdc-goal-val">$620 / $600</span>
+                  </div>
+                  <div class="pdc-bar"><div class="pdc-fill" style="width:100%"></div></div>
+                </div>
+                <div class="pdc-stats">
+                  <div class="pdc-stat"><div class="pdc-stat-val">$620</div><div class="pdc-stat-lbl">Actual</div></div>
+                  <div class="pdc-stat"><div class="pdc-stat-val">$600</div><div class="pdc-stat-lbl">Goal</div></div>
+                  <div class="pdc-stat"><div class="pdc-stat-val">8</div><div class="pdc-stat-lbl">Posts</div></div>
+                  <div class="pdc-stat"><span class="badge badge-navy" style="font-size:10px">On Track</span></div>
+                </div>
+              </div>
+
+              <!-- PDC Row 4 -->
+              <div class="pdc-row">
+                <div class="pdc-amb">
+                  <div class="pdc-avatar">MV</div>
+                  <div><div class="pdc-name">Mel V.</div><div class="pdc-handle">@makeupbymel</div></div>
+                </div>
+                <div class="pdc-goal-wrap">
+                  <div class="pdc-goal-label">
+                    <span>$0</span><span class="pdc-goal-val">$340 / $500</span>
+                  </div>
+                  <div class="pdc-bar"><div class="pdc-fill warn" style="width:68%"></div></div>
+                </div>
+                <div class="pdc-stats">
+                  <div class="pdc-stat"><div class="pdc-stat-val orange">$340</div><div class="pdc-stat-lbl">Actual</div></div>
+                  <div class="pdc-stat"><div class="pdc-stat-val">$500</div><div class="pdc-stat-lbl">Goal</div></div>
+                  <div class="pdc-stat"><div class="pdc-stat-val">5</div><div class="pdc-stat-lbl">Posts</div></div>
+                  <div class="pdc-stat"><span class="badge badge-orange" style="font-size:10px">68%</span></div>
+                </div>
+              </div>
+
+              <!-- PDC Row 5 -->
+              <div class="pdc-row">
+                <div class="pdc-amb">
+                  <div class="pdc-avatar">SK</div>
+                  <div><div class="pdc-name">Sophie K.</div><div class="pdc-handle">@skinkare.soph</div></div>
+                </div>
+                <div class="pdc-goal-wrap">
+                  <div class="pdc-goal-label">
+                    <span>$0</span><span class="pdc-goal-val">$280 / $400</span>
+                  </div>
+                  <div class="pdc-bar"><div class="pdc-fill warn" style="width:70%"></div></div>
+                </div>
+                <div class="pdc-stats">
+                  <div class="pdc-stat"><div class="pdc-stat-val orange">$280</div><div class="pdc-stat-lbl">Actual</div></div>
+                  <div class="pdc-stat"><div class="pdc-stat-val">$400</div><div class="pdc-stat-lbl">Goal</div></div>
+                  <div class="pdc-stat"><div class="pdc-stat-val">6</div><div class="pdc-stat-lbl">Posts</div></div>
+                  <div class="pdc-stat"><span class="badge badge-orange" style="font-size:10px">70%</span></div>
+                </div>
+              </div>
+
+              <!-- PDC Row 6 -->
+              <div class="pdc-row">
+                <div class="pdc-amb">
+                  <div class="pdc-avatar">RL</div>
+                  <div><div class="pdc-name">Riley L.</div><div class="pdc-handle">@rileylooks</div></div>
+                </div>
+                <div class="pdc-goal-wrap">
+                  <div class="pdc-goal-label">
+                    <span>$0</span><span class="pdc-goal-val">$140 / $300</span>
+                  </div>
+                  <div class="pdc-bar"><div class="pdc-fill warn" style="width:47%"></div></div>
+                </div>
+                <div class="pdc-stats">
+                  <div class="pdc-stat"><div class="pdc-stat-val orange">$140</div><div class="pdc-stat-lbl">Actual</div></div>
+                  <div class="pdc-stat"><div class="pdc-stat-val">$300</div><div class="pdc-stat-lbl">Goal</div></div>
+                  <div class="pdc-stat"><div class="pdc-stat-val">3</div><div class="pdc-stat-lbl">Posts</div></div>
+                  <div class="pdc-stat"><span class="badge badge-orange" style="font-size:10px">47%</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer" style="display:flex;align-items:center;justify-content:space-between">
+            <div class="muted" style="font-size:12px">Showing top 6 of 46 ambassadors · Goal period: May 2026</div>
+            <a href="ambassador-cms.html" class="btn btn-ghost btn-sm">Manage All Ambassadors →</a>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+  // Highlight active nav item on scroll
+  const sections = document.querySelectorAll('.section-block[id]');
+  const navItems = document.querySelectorAll('.nav-item[href^="#"]');
+
+  function updateActiveNav() {
+    let current = '';
+    sections.forEach(section => {
+      const top = section.getBoundingClientRect().top;
+      if (top <= 80) current = section.id;
+    });
+    navItems.forEach(item => {
+      item.classList.remove('active');
+      if (item.getAttribute('href') === '#' + current) {
+        item.classList.add('active');
+      }
+    });
+    if (!current && navItems.length) navItems[0].classList.add('active');
+  }
+
+  document.querySelector('.main').addEventListener('scroll', updateActiveNav);
+
+  // Smooth scroll for anchor links
+  navItems.forEach(item => {
+    item.addEventListener('click', e => {
+      const href = item.getAttribute('href');
+      if (href && href.startsWith('#')) {
+        e.preventDefault();
+        const target = document.getElementById(href.slice(1));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    });
+  });
+
+  // Chip tab toggle (visual only)
+  document.querySelectorAll('.chip-tabs').forEach(tabs => {
+    tabs.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        tabs.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+      });
+    });
+  });
+</script>
+</body>
+</html>

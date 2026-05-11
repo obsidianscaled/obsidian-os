@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Obsidian — OpenClaw Automations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #FFFFFF;
+    --bg2:       #F8F9FC;
+    --bg3:       #F1F3F7;
+    --bg4:       #E9ECF2;
+    --border:    #E5E7EB;
+    --border2:   #D1D5DB;
+    --text:      #0A0A0A;
+    --text2:     #6B7280;
+    --text3:     #9CA3AF;
+    --accent:    #1E3A5F;
+    --accent2:   #2E5F9E;
+    --accent-dim:  rgba(30,58,95,0.06);
+    --accent-dim2: rgba(30,58,95,0.12);
+    --red:     #DC2626;
+    --orange:  #D97706;
+    --blue:    #2563EB;
+    --green:   #059669;
+    --tier1:   #6B7280;
+    --tier2:   #2563EB;
+    --tier3:   #7C3AED;
+    --tier4:   #D97706;
+    --tierA:   #1E3A5F;
+    --radius:  8px;
+    --radius2: 12px;
+    --shadow:  0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow2: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg2);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+  /* ── LAYOUT ── */
+  .app { display: flex; height: 100vh; overflow: hidden; }
+  .sidebar {
+    width: 224px; min-width: 224px; background: var(--bg);
+    border-right: 1px solid var(--border); display: flex;
+    flex-direction: column; overflow-y: auto;
+  }
+  .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; background: var(--bg2); }
+
+  /* ── SIDEBAR ── */
+  .brand { padding: 22px 20px 18px; border-bottom: 1px solid var(--border); }
+  .brand-name { font-size: 17px; font-weight: 800; letter-spacing: 0.06em; color: var(--accent); text-transform: uppercase; }
+  .brand-sub { font-size: 11px; color: var(--text3); letter-spacing: 0.02em; margin-top: 2px; font-weight: 500; }
+
+  .nav { padding: 14px 10px; flex: 1; }
+  .nav-section { margin-bottom: 22px; }
+  .nav-label { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); padding: 4px 10px; margin-bottom: 3px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 10px; border-radius: var(--radius);
+    cursor: pointer; color: var(--text2); font-size: 13.5px; font-weight: 500;
+    transition: all 0.12s; border: none; background: none; width: 100%;
+    text-align: left; position: relative; text-decoration: none;
+  }
+  .nav-item:hover { background: var(--bg2); color: var(--text); }
+  .nav-item.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: 0; top: 4px; bottom: 4px;
+    width: 3px; background: var(--accent); border-radius: 0 2px 2px 0;
+  }
+  .nav-item .icon { width: 16px; text-align: center; font-size: 14px; flex-shrink: 0; opacity: 0.7; }
+  .nav-item.active .icon { opacity: 1; }
+  .nav-badge {
+    margin-left: auto; background: #FEF3C7; color: #92400E;
+    font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px;
+    min-width: 18px; text-align: center; border: 1px solid #FDE68A;
+  }
+  .nav-badge.red { background: #FEF2F2; color: #DC2626; border-color: #FECACA; }
+  .nav-badge.green { background: #ECFDF5; color: #059669; border-color: #A7F3D0; }
+
+  .sidebar-footer { padding: 14px 20px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text3); font-weight: 500; }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    background: var(--bg); border-bottom: 1px solid var(--border);
+    padding: 0 28px; height: 60px; display: flex; align-items: center;
+    justify-content: space-between; flex-shrink: 0;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar-title { font-size: 16px; font-weight: 700; color: var(--text); }
+  .topbar-sub { font-size: 12px; color: var(--text3); margin-top: 1px; font-weight: 400; }
+  .topbar-right { display: flex; align-items: center; gap: 8px; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: var(--radius); border: none;
+    cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.12s;
+    white-space: nowrap; font-family: inherit; letter-spacing: 0.01em;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border2); box-shadow: var(--shadow); }
+  .btn-secondary:hover { background: var(--bg2); }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--bg2); color: var(--text); border-color: var(--border2); }
+  .btn-success { background: #ECFDF5; color: var(--green); border: 1px solid #A7F3D0; }
+  .btn-success:hover { background: #D1FAE5; }
+  .btn-warning { background: #FFFBEB; color: var(--orange); border: 1px solid #FDE68A; }
+  .btn-warning:hover { background: #FEF3C7; }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn-xs { padding: 3px 8px; font-size: 11px; }
+
+  /* ── CONTENT ── */
+  .content { padding: 28px; flex: 1; }
+
+  /* ── SECTION BLOCKS ── */
+  .section-block { margin-bottom: 32px; scroll-margin-top: 20px; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .section-title { font-size: 14px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .section-icon { font-size: 16px; }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius2); box-shadow: var(--shadow); overflow: hidden;
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+  }
+  .card-title { font-size: 13px; font-weight: 700; color: var(--text); }
+  .card-body { padding: 20px; }
+  .card-footer { padding: 12px 20px; border-top: 1px solid var(--border); background: var(--bg2); }
+
+  /* ── GRID LAYOUTS ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+  .grid-1-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 14px; }
+
+  /* ── STAT CARDS ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .stats-grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .stat-card {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius2); padding: 20px 22px;
+    box-shadow: var(--shadow); position: relative; overflow: hidden;
+  }
+  .stat-card::before {
+    content: ''; position: absolute; top: 0; left: 0; bottom: 0;
+    width: 3px; background: var(--border2);
+  }
+  .stat-card.accent::before { background: var(--accent); }
+  .stat-card.green::before { background: var(--green); }
+  .stat-card.orange::before { background: var(--orange); }
+  .stat-card.red::before { background: var(--red); }
+  .stat-card.blue::before { background: var(--blue); }
+  .stat-value { font-size: 28px; font-weight: 800; line-height: 1; color: var(--accent); margin-bottom: 6px; font-variant-numeric: tabular-nums; }
+  .stat-value.green { color: var(--green); }
+  .stat-value.orange { color: var(--orange); }
+  .stat-value.red { color: var(--red); }
+  .stat-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+  .stat-delta { font-size: 11px; margin-top: 5px; color: var(--text3); }
+  .stat-delta.up { color: var(--green); font-weight: 600; }
+  .stat-delta.down { color: var(--red); font-weight: 600; }
+
+  /* ── TABLE ── */
+  .table-wrap { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius2); overflow: hidden; box-shadow: var(--shadow); }
+  .table-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--border); }
+  .table-header-left { display: flex; align-items: center; gap: 12px; }
+  .table-count { font-size: 12px; color: var(--text3); font-weight: 500; }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: var(--bg2); border-bottom: 1px solid var(--border); }
+  th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.08s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:nth-child(even) { background: #FAFBFD; }
+  tbody tr:hover { background: var(--accent-dim) !important; }
+  td { padding: 12px 16px; vertical-align: middle; font-size: 13px; }
+
+  /* ── BADGES ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  }
+  .badge-green { background: #ECFDF5; color: var(--green); border: 1px solid #A7F3D0; }
+  .badge-red { background: #FEF2F2; color: var(--red); border: 1px solid #FECACA; }
+  .badge-orange { background: #FFFBEB; color: var(--orange); border: 1px solid #FDE68A; }
+  .badge-blue { background: #EFF6FF; color: var(--blue); border: 1px solid #BFDBFE; }
+  .badge-navy { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(30,58,95,0.2); }
+  .badge-gray { background: #F3F4F6; color: var(--text2); border: 1px solid #E5E7EB; }
+  .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+  /* ── TIER BADGES ── */
+  .tier-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .tier-1 { background: #F3F4F6; color: var(--tier1); border: 1px solid #E5E7EB; }
+  .tier-2 { background: #EFF6FF; color: var(--tier2); border: 1px solid #BFDBFE; }
+  .tier-3 { background: #F5F3FF; color: var(--tier3); border: 1px solid #DDD6FE; }
+  .tier-4 { background: #FFFBEB; color: var(--tier4); border: 1px solid #FDE68A; }
+  .tier-A { background: #EFF6FF; color: var(--accent); border: 1px solid #93C5FD; font-weight: 800; }
+
+  /* ── ALERT ITEMS ── */
+  .alert-list { display: flex; flex-direction: column; gap: 10px; }
+  .alert-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-radius: var(--radius); border: 1px solid; }
+  .alert-item.critical { background: #FEF2F2; border-color: #FECACA; }
+  .alert-item.warning  { background: #FFFBEB; border-color: #FDE68A; }
+  .alert-item.info     { background: #EFF6FF; border-color: #BFDBFE; }
+  .alert-item.success  { background: #ECFDF5; border-color: #A7F3D0; }
+  .alert-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .alert-body { flex: 1; }
+  .alert-title { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+  .alert-item.critical .alert-title { color: var(--red); }
+  .alert-item.warning  .alert-title { color: #92400E; }
+  .alert-item.info     .alert-title { color: var(--blue); }
+  .alert-item.success  .alert-title { color: var(--green); }
+  .alert-desc { font-size: 12px; color: var(--text2); }
+  .alert-time { font-size: 11px; color: var(--text3); margin-left: auto; white-space: nowrap; padding-left: 12px; }
+
+  /* ── METRIC ROW ── */
+  .metric-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .metric-row:last-child { border-bottom: none; }
+  .metric-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .metric-val { font-size: 15px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; text-align: right; }
+  .metric-delta { font-size: 11px; font-weight: 600; margin-top: 2px; text-align: right; }
+  .metric-delta.up { color: var(--green); }
+  .metric-delta.down { color: var(--red); }
+
+  /* ── DIVIDER ── */
+  .divider { height: 1px; background: var(--border); margin: 18px 0; }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap { margin-bottom: 10px; }
+  .progress-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+  .progress-name { font-size: 12px; font-weight: 600; color: var(--text); }
+  .progress-pct { font-size: 12px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .progress-bar { height: 7px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; background: var(--accent); transition: width 0.4s ease; }
+  .progress-fill.green { background: var(--green); }
+  .progress-fill.orange { background: var(--orange); }
+  .progress-fill.red { background: var(--red); }
+
+  /* ══════════════════════════════════════════
+     PAGE-SPECIFIC STYLES
+  ══════════════════════════════════════════ */
+
+  /* ── AUTOMATION ROW ── */
+  .automation-list { display: flex; flex-direction: column; gap: 0; }
+  .automation-row {
+    display: flex; align-items: center; gap: 16px;
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    transition: background 0.08s;
+  }
+  .automation-row:last-child { border-bottom: none; }
+  .automation-row:hover { background: var(--bg2); }
+  .automation-icon {
+    width: 38px; height: 38px; border-radius: var(--radius);
+    background: var(--accent-dim); display: flex; align-items: center;
+    justify-content: center; font-size: 18px; flex-shrink: 0;
+  }
+  .automation-info { flex: 1; min-width: 0; }
+  .automation-name { font-size: 13.5px; font-weight: 700; color: var(--text); }
+  .automation-desc { font-size: 12px; color: var(--text3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .automation-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; min-width: 160px; }
+  .automation-time { font-size: 11px; color: var(--text3); font-variant-numeric: tabular-nums; }
+  .automation-toggle {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    padding: 5px 12px; border-radius: var(--radius); border: 1px solid var(--border2);
+    background: var(--bg); font-size: 12px; font-weight: 600; color: var(--text2);
+    transition: all 0.12s; font-family: inherit; flex-shrink: 0;
+  }
+  .automation-toggle:hover { background: var(--bg2); color: var(--text); }
+  .automation-toggle.paused { background: #FEF3C7; color: #92400E; border-color: #FDE68A; }
+  .automation-toggle.paused:hover { background: #FDE68A; }
+
+  /* ── TOGGLE SWITCH ── */
+  .toggle-switch { position: relative; display: inline-flex; align-items: center; cursor: pointer; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-track {
+    width: 36px; height: 20px; border-radius: 10px; background: var(--border2);
+    transition: background 0.2s; display: flex; align-items: center; padding: 2px;
+  }
+  .toggle-thumb {
+    width: 16px; height: 16px; border-radius: 50%; background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.2s;
+  }
+  .toggle-switch input:checked + .toggle-track { background: var(--green); }
+  .toggle-switch input:checked + .toggle-track .toggle-thumb { transform: translateX(16px); }
+
+  /* ── EMAIL PREVIEW ── */
+  .email-preview {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius2); overflow: hidden; box-shadow: var(--shadow);
+  }
+  .email-header {
+    background: var(--accent); color: #fff; padding: 20px 24px;
+  }
+  .email-header-title { font-size: 16px; font-weight: 800; letter-spacing: 0.03em; }
+  .email-header-sub { font-size: 12px; opacity: 0.75; margin-top: 4px; }
+  .email-body { padding: 0; }
+  .email-section { padding: 18px 24px; border-bottom: 1px solid var(--border); }
+  .email-section:last-child { border-bottom: none; }
+  .email-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 12px; }
+  .email-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .email-row:last-child { border-bottom: none; }
+  .email-row-label { color: var(--text2); font-weight: 500; }
+  .email-row-val { font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+  .email-row-val.good { color: var(--green); }
+  .email-row-val.warn { color: var(--orange); }
+  .email-row-val.bad  { color: var(--red); }
+  .email-recipients {
+    background: var(--bg2); padding: 12px 24px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    border-top: 1px solid var(--border);
+  }
+  .email-recipients-label { font-size: 11px; color: var(--text3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  .recipient-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--bg); border: 1px solid var(--border2);
+    border-radius: 20px; padding: 3px 10px; font-size: 12px; font-weight: 500; color: var(--text2);
+  }
+
+  /* ── COMMISSION TRACKER ── */
+  .commission-tier-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+  }
+  .commission-tier-row:last-child { border-bottom: none; }
+  .commission-tier-row:hover { background: var(--bg2); }
+  .commission-tier-info { flex: 1; }
+  .commission-tier-name { font-size: 13px; font-weight: 700; }
+  .commission-tier-req  { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .commission-pct { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--accent); min-width: 52px; text-align: right; }
+  .commission-count { font-size: 11px; color: var(--text3); text-align: right; min-width: 60px; }
+
+  /* ── COUNTDOWN ── */
+  .countdown-block {
+    background: var(--accent-dim); border: 1px solid rgba(30,58,95,0.15);
+    border-radius: var(--radius); padding: 14px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .countdown-label { font-size: 12px; font-weight: 600; color: var(--accent); }
+  .countdown-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .countdown-timer { font-size: 26px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+
+  /* ── FLOW ROW ── */
+  .flow-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+  }
+  .flow-row:last-child { border-bottom: none; }
+  .flow-row:hover { background: var(--bg2); }
+  .flow-icon {
+    width: 34px; height: 34px; border-radius: var(--radius);
+    background: var(--bg3); display: flex; align-items: center;
+    justify-content: center; font-size: 16px; flex-shrink: 0;
+  }
+  .flow-info { flex: 1; }
+  .flow-name { font-size: 13px; font-weight: 700; color: var(--text); }
+  .flow-trigger { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .flow-stats { display: flex; gap: 20px; align-items: center; }
+  .flow-stat { text-align: right; }
+  .flow-stat-val { font-size: 14px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .flow-stat-lbl { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 1px; }
+
+  /* ── INVENTORY ROW ── */
+  .inv-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .inv-row:last-child { border-bottom: none; }
+  .inv-row:hover { background: var(--bg2); }
+  .inv-name { flex: 1; font-size: 13px; font-weight: 600; }
+  .inv-sub  { font-size: 11px; color: var(--text3); font-weight: 400; margin-top: 1px; }
+  .inv-col  { text-align: right; min-width: 70px; }
+  .inv-col-val { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .inv-col-lbl { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 1px; }
+  .days-pill {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .days-green  { background: #ECFDF5; color: var(--green); border: 1px solid #A7F3D0; }
+  .days-amber  { background: #FFFBEB; color: var(--orange); border: 1px solid #FDE68A; }
+  .days-red    { background: #FEF2F2; color: var(--red); border: 1px solid #FECACA; }
+  .reorder-btn { background: var(--bg3); color: var(--text2); border: 1px solid var(--border2); border-radius: var(--radius); padding: 4px 10px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.12s; white-space: nowrap; }
+  .reorder-btn.urgent { background: #FEF2F2; color: var(--red); border-color: #FECACA; }
+  .reorder-btn.urgent:hover { background: #FEE2E2; }
+  .reorder-btn:hover { background: var(--bg4); color: var(--text); }
+
+  /* ── ACTIVITY LOG ── */
+  .log-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 10px 20px; border-bottom: 1px solid var(--border);
+  }
+  .log-item:last-child { border-bottom: none; }
+  .log-item:hover { background: var(--bg2); }
+  .log-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    margin-top: 5px; flex-shrink: 0;
+  }
+  .log-dot.green  { background: var(--green); }
+  .log-dot.blue   { background: var(--blue); }
+  .log-dot.orange { background: var(--orange); }
+  .log-dot.red    { background: var(--red); }
+  .log-dot.gray   { background: var(--border2); }
+  .log-dot.navy   { background: var(--accent); }
+  .log-text { flex: 1; font-size: 12.5px; color: var(--text); line-height: 1.45; }
+  .log-text strong { font-weight: 700; }
+  .log-time { font-size: 11px; color: var(--text3); white-space: nowrap; padding-left: 8px; font-variant-numeric: tabular-nums; }
+
+  /* ── EMAIL SECTION HIGHLIGHT ── */
+  .amb-rank { width: 22px; height: 22px; border-radius: 50%; background: var(--accent-dim); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--accent); flex-shrink: 0; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .sidebar { width: 60px; min-width: 60px; }
+    .brand-name, .brand-sub { display: none; }
+    .nav-item span:not(.icon) { display: none; }
+    .nav-label, .nav-badge { display: none; }
+    .automation-desc { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══════════ SIDEBAR ══════════ -->
+  <nav class="sidebar">
+    <div class="brand">
+      <div class="brand-name">Obsidian</div>
+      <div class="brand-sub">Operations Suite</div>
+    </div>
+    <div class="nav">
+      <div class="nav-section">
+        <div class="nav-label">Pages</div>
+        <a class="nav-item" href="command-dashboard.html">
+          <span class="icon">📊</span><span>Command Dashboard</span>
+        </a>
+        <a class="nav-item" href="ambassador-cms.html">
+          <span class="icon">🏅</span><span>Ambassador CMS</span>
+        </a>
+        <a class="nav-item active" href="openclaw-automations.html">
+          <span class="icon">⚙️</span><span>OpenClaw Automations</span>
+        </a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Sections</div>
+        <a class="nav-item" href="#automations">
+          <span class="icon">🤖</span><span>Automation Status</span>
+          <span class="nav-badge green">8</span>
+        </a>
+        <a class="nav-item" href="#email-preview">
+          <span class="icon">✉️</span><span>Daily Email Preview</span>
+        </a>
+        <a class="nav-item" href="#commissions">
+          <span class="icon">💰</span><span>Commission Tracker</span>
+        </a>
+        <a class="nav-item" href="#klaviyo-flows">
+          <span class="icon">⚡</span><span>Klaviyo Flows</span>
+        </a>
+        <a class="nav-item" href="#inventory-alerts">
+          <span class="icon">📦</span><span>Inventory Alerts</span>
+          <span class="nav-badge red">3</span>
+        </a>
+        <a class="nav-item" href="#activity-log">
+          <span class="icon">📋</span><span>Activity Log</span>
+        </a>
+      </div>
+    </div>
+    <div class="sidebar-footer">v1.0 · Obsidian OS</div>
+  </nav>
+
+  <!-- ══════════ MAIN ══════════ -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div>
+          <div class="topbar-title">⚙️ OpenClaw Automations</div>
+          <div class="topbar-sub">Automation control center · Last synced 2 min ago</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-ghost btn-sm">📋 View Logs</button>
+        <button class="btn btn-secondary btn-sm">🔄 Sync All</button>
+        <button class="btn btn-primary btn-sm">+ New Automation</button>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- SUMMARY STATS -->
+      <div class="stats-grid stats-grid-4" style="margin-bottom:28px;">
+        <div class="stat-card green">
+          <div class="stat-value green">6</div>
+          <div class="stat-label">Running Now</div>
+          <div class="stat-delta up">↑ All healthy</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-value orange">2</div>
+          <div class="stat-label">Scheduled</div>
+          <div class="stat-delta">Next run in 38 min</div>
+        </div>
+        <div class="stat-card accent">
+          <div class="stat-value">47</div>
+          <div class="stat-label">Ambassadors Synced</div>
+          <div class="stat-delta">BixGrow · today 10:02 AM</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-value red">3</div>
+          <div class="stat-label">Active Alerts</div>
+          <div class="stat-delta down">↓ Inventory + ROAS</div>
+        </div>
+      </div>
+
+      <!-- ── SECTION 1: AUTOMATION STATUS ── -->
+      <div class="section-block" id="automations">
+        <div class="section-header">
+          <div class="section-title"><span class="section-icon">🤖</span> Automation Status</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm">⏸ Pause All</button>
+            <button class="btn btn-secondary btn-sm">▶ Resume All</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-header-left">
+              <span class="card-title">Active Automations</span>
+              <span class="table-count">8 automations</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span class="badge badge-green">6 Running</span>
+              <span class="badge badge-orange">2 Scheduled</span>
+            </div>
+          </div>
+
+          <div class="automation-list">
+
+            <!-- BixGrow Daily Sync -->
+            <div class="automation-row">
+              <div class="automation-icon">🔄</div>
+              <div class="automation-info">
+                <div class="automation-name">BixGrow Daily Sync</div>
+                <div class="automation-desc">Pulls all ambassador data from BixGrow — commissions, sales counts, tier updates</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;min-width:140px;">
+                <span class="badge badge-green">Running</span>
+                <span class="automation-time">Last: Today 10:02 AM</span>
+                <span class="automation-time">Next: Tomorrow 10:00 AM</span>
+              </div>
+              <label class="toggle-switch" title="Pause automation">
+                <input type="checkbox" checked onchange="toggleAutomation(this, 'BixGrow Daily Sync')">
+                <div class="toggle-track"><div class="toggle-thumb"></div></div>
+              </label>
+            </div>
+
+            <!-- Klaviyo Ambassador Sync -->
+            <div class="automation-row">
+              <div class="automation-icon">⚡</div>
+              <div class="automation-info">
+                <div class="automation-name">Klaviyo Ambassador Sync</div>
+                <div class="automation-desc">Checks BixGrow for new ambassadors every hour and adds them to Klaviyo lists</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;min-width:140px;">
+                <span class="badge badge-green">Running</span>
+                <span class="automation-time">Last: Today 11:00 AM</span>
+                <span class="automation-time">Next: Today 12:00 PM</span>
+              </div>
+              <label class="toggle-switch" title="Pause automation">
+                <input type="checkbox" checked onchange="toggleAutomation(this, 'Klaviyo Ambassador Sync')">
+                <div class="toggle-track"><div class="toggle-thumb"></div></div>
+              </label>
+            </div>
+
+            <!-- Meta Ads Monitor -->
+            <div class="automation-row" style="background:#FFFBF0;">
+              <div class="automation-icon" style="background:#FEF3C7;">📈</div>
+              <div class="automation-info">
+                <div class="automation-name">Meta Ads Monitor</div>
+                <div class="automation-desc">Checks account ROAS every 2 hours — alerts if any campaign drops below 2.0x</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;min-width:140px;">
+                <span class="badge badge-orange">⚠ Alert Active</span>
+                <span class="automation-time" style="color:var(--orange);font-weight:600;">ROAS 1.8x — Campaign Alpha</span>
+                <span class="automation-time">Next check: 12:30 PM</span>
+              </div>
+              <label class="toggle-switch" title="Pause automation">
+                <input type="checkbox" checked onchange="toggleAutomation(this, 'Meta Ads Monitor')">
+                <div class="toggle-track"><div class="toggle-thumb"></div></div>
+              </label>
+            </div>
+
+            <!-- Inventory Watchdog -->
+            <div class="automation-row" style="background:#FFF9F9;">
+              <div class="automation-icon" style="background:#FEE2E2;">📦</div>
+              <div class="automation-info">
+                <div class="automation-name">Inventory Watchdog</div>
+                <div class="automation-desc">Checks stock levels every hour — alerts if any product has under 60-day supply</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;min-width:140px;">
+                <span class="badge badge-red">🔴 3 Critical</span>
+                <span class="automation-time" style="color:var(--red);font-weight:600;">3 products below threshold</span>
+                <span class="automation-time">Next check: 12:00 PM</span>
+              </div>
+              <label class="toggle-switch" title="Pause automation">
+                <input type="checkbox" checked onchange="toggleAutomation(this, 'Inventory Watchdog')">
+                <div class="toggle-track"><div class="toggle-thumb"></div></div>
+              </label>
+            </div>
+
+            <!-- Daily Email Briefing -->
+            <div class="automation-row">
+              <div class="automation-icon">✉️</div>
+              <div class="automation-info">
+                <div class="automation-name">Daily Email Briefing</div>
+                <div class="automation-desc">Sends morning briefing to obsidianscaled@gmail.com + athlete manager at 10 AM daily</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;min-width:140px;">
+                <span class="badge badge-green">Running</span>
+                <span class="automation-time">Last: Today 10:00 AM · Sent ✓</span>
+                <span class="automation-time">Next: Tomorrow 10:00 AM</span>
+              </div>
+              <label class="toggle-switch" title="Pause automation">
+                <input type="checkbox" checked onchange="toggleAutomation(this, 'Daily Email Briefing')">
+                <div class="toggle-track"><div class="toggle-thumb"></div></div>
+              </label>
+            </div>
+
+            <!-- Weekly Content Calendar -->
+            <div class="automation-row">
+              <div class="automation-icon">📅</div>
+              <div class="automation-info">
+                <div class="automation-name">Weekly Content Calendar</div>
+                <div class="automation-desc">Organizes and distributes content calendar to ambassadors every Monday at 8 AM</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;min-width:140px;">
+                <span class="badge badge-orange">Scheduled</span>
+                <span class="automation-time">Last: Mon May 5, 8:00 AM</span>
+                <span class="automation-time">Next: Mon May 12, 8:00 AM</span>
+              </div>
+              <label class="toggle-switch" title="Pause automation">
+                <input type="checkbox" checked onchange="toggleAutomation(this, 'Weekly Content Calendar')">
+                <div class="toggle-track"><div class="toggle-thumb"></div></div>
+              </label>
+            </div>
+
+            <!-- Referral Program Monitor -->
+            <div class="automation-row">
+              <div class="automation-icon">🔗</div>
+              <div class="automation-info">
+                <div class="automation-name">Referral Program Monitor</div>
+                <div class="automation-desc">Tracks referral link conversions daily — updates attribution and rewards in BixGrow</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;min-width:140px;">
+                <span class="badge badge-green">Running</span>
+                <span class="automation-time">Last: Today 9:45 AM</span>
+                <span class="automation-time">Next: Tomorrow 9:45 AM</span>
+              </div>
+              <label class="toggle-switch" title="Pause automation">
+                <input type="checkbox" checked onchange="toggleAutomation(this, 'Referral Monitor')">
+                <div class="toggle-track"><div class="toggle-thumb"></div></div>
+              </label>
+            </div>
+
+            <!-- PDC Google Drive Sync -->
+            <div class="automation-row">
+              <div class="automation-icon">📂</div>
+              <div class="automation-info">
+                <div class="automation-name">PDC Google Drive Sync</div>
+                <div class="automation-desc">Reads new PDC PDFs from Google Drive daily — parses and imports product/lab data</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;min-width:140px;">
+                <span class="badge badge-orange">Scheduled</span>
+                <span class="automation-time">Last: Today 6:00 AM · 2 new files</span>
+                <span class="automation-time">Next: Tomorrow 6:00 AM</span>
+              </div>
+              <label class="toggle-switch" title="Pause automation">
+                <input type="checkbox" checked onchange="toggleAutomation(this, 'PDC Drive Sync')">
+                <div class="toggle-track"><div class="toggle-thumb"></div></div>
+              </label>
+            </div>
+
+          </div><!-- /.automation-list -->
+        </div><!-- /.table-wrap -->
+      </div><!-- /.section-block #automations -->
+
+
+      <!-- ── SECTION 2: DAILY EMAIL PREVIEW ── -->
+      <div class="section-block" id="email-preview">
+        <div class="section-header">
+          <div class="section-title"><span class="section-icon">✉️</span> Daily Email Preview</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm">✏️ Edit Template</button>
+            <button class="btn btn-primary btn-sm" onclick="alert('Test email sent to obsidianscaled@gmail.com')">📤 Send Test Email</button>
+          </div>
+        </div>
+
+        <div class="grid-2-1" style="gap:16px;">
+
+          <!-- Email preview -->
+          <div class="email-preview">
+            <div class="email-header">
+              <div class="email-header-title">☀️ Obsidian Morning Briefing — May 11, 2026</div>
+              <div class="email-header-sub">Daily Operations Summary · Generated at 10:00 AM</div>
+            </div>
+            <div class="email-body">
+
+              <div class="email-section">
+                <div class="email-section-title">💰 Revenue Summary</div>
+                <div class="email-row"><span class="email-row-label">Today (so far)</span><span class="email-row-val good">$3,412</span></div>
+                <div class="email-row"><span class="email-row-label">Yesterday</span><span class="email-row-val">$4,187</span></div>
+                <div class="email-row"><span class="email-row-label">This Week</span><span class="email-row-val">$19,340</span></div>
+                <div class="email-row"><span class="email-row-label">MTD</span><span class="email-row-val">$41,220</span></div>
+                <div class="email-row"><span class="email-row-label">MTD Goal</span><span class="email-row-val">$60,000 · 69% complete</span></div>
+              </div>
+
+              <div class="email-section">
+                <div class="email-section-title">🏅 Top Ambassadors</div>
+                <div style="margin-bottom:10px;">
+                  <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Last 24h</div>
+                  <div class="email-row"><span class="email-row-label" style="display:flex;align-items:center;gap:8px;"><div class="amb-rank">1</div> @jake_lifts</span><span class="email-row-val good">$842 · 6 sales</span></div>
+                  <div class="email-row"><span class="email-row-label" style="display:flex;align-items:center;gap:8px;"><div class="amb-rank">2</div> @mia_fitness</span><span class="email-row-val">$614 · 4 sales</span></div>
+                  <div class="email-row"><span class="email-row-label" style="display:flex;align-items:center;gap:8px;"><div class="amb-rank">3</div> @powerblock_sam</span><span class="email-row-val">$521 · 3 sales</span></div>
+                </div>
+              </div>
+
+              <div class="email-section">
+                <div class="email-section-title">📦 Inventory Alerts</div>
+                <div class="email-row"><span class="email-row-label">Obsidian Pre-Workout 40sv</span><span class="email-row-val bad">⚠ 12 days remaining</span></div>
+                <div class="email-row"><span class="email-row-label">Obsidian Creatine 300g</span><span class="email-row-val warn">⚠ 28 days remaining</span></div>
+                <div class="email-row"><span class="email-row-label">Obsidian Whey 2lb</span><span class="email-row-val warn">⚠ 34 days remaining</span></div>
+              </div>
+
+              <div class="email-section">
+                <div class="email-section-title">📈 Meta ROAS</div>
+                <div class="email-row"><span class="email-row-label">Account ROAS</span><span class="email-row-val good">2.4x</span></div>
+                <div class="email-row"><span class="email-row-label">Campaign Alpha</span><span class="email-row-val bad">1.8x ⚠ Below 2.0x threshold</span></div>
+                <div class="email-row"><span class="email-row-label">Campaign Beta</span><span class="email-row-val good">3.1x</span></div>
+                <div class="email-row"><span class="email-row-label">Ad Spend (today)</span><span class="email-row-val">$487</span></div>
+              </div>
+
+              <div class="email-section">
+                <div class="email-section-title">⚡ Klaviyo Metrics</div>
+                <div class="email-row"><span class="email-row-label">Emails Sent (24h)</span><span class="email-row-val">1,284</span></div>
+                <div class="email-row"><span class="email-row-label">Open Rate</span><span class="email-row-val good">38.4%</span></div>
+                <div class="email-row"><span class="email-row-label">Click Rate</span><span class="email-row-val">6.2%</span></div>
+                <div class="email-row"><span class="email-row-label">Revenue Attributed</span><span class="email-row-val good">$2,190</span></div>
+              </div>
+
+            </div><!-- /.email-body -->
+
+            <div class="email-recipients">
+              <span class="email-recipients-label">To:</span>
+              <span class="recipient-chip">📧 obsidianscaled@gmail.com</span>
+              <span class="recipient-chip">👤 [Athlete Manager Email]</span>
+            </div>
+
+          </div><!-- /.email-preview -->
+
+          <!-- Sidebar info -->
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Send Schedule</span>
+              </div>
+              <div class="card-body" style="padding:16px;">
+                <div class="metric-row">
+                  <div><div class="metric-name">Daily Briefing</div><div class="metric-sub">Mon–Sun</div></div>
+                  <div class="metric-val">10:00 AM</div>
+                </div>
+                <div class="metric-row">
+                  <div><div class="metric-name">Weekly Summary</div><div class="metric-sub">Monday only</div></div>
+                  <div class="metric-val">8:00 AM</div>
+                </div>
+                <div class="metric-row">
+                  <div><div class="metric-name">Monthly Report</div><div class="metric-sub">1st of month</div></div>
+                  <div class="metric-val">9:00 AM</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Delivery Status</span>
+              </div>
+              <div class="card-body" style="padding:16px;">
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:13px;font-weight:500;">Today</span>
+                    <span class="badge badge-green">✓ Delivered</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:13px;font-weight:500;">Yesterday</span>
+                    <span class="badge badge-green">✓ Delivered</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:13px;font-weight:500;">May 9</span>
+                    <span class="badge badge-green">✓ Delivered</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:13px;font-weight:500;">May 8</span>
+                    <span class="badge badge-green">✓ Delivered</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:13px;font-weight:500;">May 7</span>
+                    <span class="badge badge-gray">Skipped</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Recipients</span>
+                <button class="btn btn-ghost btn-xs">+ Add</button>
+              </div>
+              <div class="card-body" style="padding:16px;">
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:12px;color:var(--text2);">obsidianscaled@gmail.com</span>
+                    <span class="badge badge-green" style="font-size:10px;">Primary</span>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:12px;color:var(--text2);">[Athlete Manager Email]</span>
+                    <span class="badge badge-blue" style="font-size:10px;">Manager</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /.grid-2-1 -->
+      </div><!-- /.section-block #email-preview -->
+
+
+      <!-- ── SECTION 3: BIXGROW COMMISSION TRACKER ── -->
+      <div class="section-block" id="commissions">
+        <div class="section-header">
+          <div class="section-title"><span class="section-icon">💰</span> BixGrow Commission Tracker</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm">📥 Export CSV</button>
+            <button class="btn btn-secondary btn-sm">🔄 Refresh</button>
+          </div>
+        </div>
+
+        <div class="grid-2" style="gap:16px;margin-bottom:16px;">
+
+          <!-- Tier structure -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Commission Tier Structure</span>
+              <span class="badge badge-navy">Monthly Reset</span>
+            </div>
+            <div>
+              <div class="commission-tier-row">
+                <div class="commission-tier-info">
+                  <div class="commission-tier-name" style="color:var(--tier1);">Level 1</div>
+                  <div class="commission-tier-req">0–3 sales per month</div>
+                </div>
+                <div class="commission-count">14 ambassadors</div>
+                <div class="commission-pct" style="color:var(--tier1);">5%</div>
+              </div>
+              <div class="commission-tier-row">
+                <div class="commission-tier-info">
+                  <div class="commission-tier-name" style="color:var(--tier2);">Level 2</div>
+                  <div class="commission-tier-req">4–6 sales per month</div>
+                </div>
+                <div class="commission-count">11 ambassadors</div>
+                <div class="commission-pct" style="color:var(--tier2);">10%</div>
+              </div>
+              <div class="commission-tier-row">
+                <div class="commission-tier-info">
+                  <div class="commission-tier-name" style="color:var(--tier3);">Level 3</div>
+                  <div class="commission-tier-req">7–10 sales per month</div>
+                </div>
+                <div class="commission-count">9 ambassadors</div>
+                <div class="commission-pct" style="color:var(--tier3);">15%</div>
+              </div>
+              <div class="commission-tier-row">
+                <div class="commission-tier-info">
+                  <div class="commission-tier-name" style="color:var(--tier4);">Level 4</div>
+                  <div class="commission-tier-req">11–15 sales per month</div>
+                </div>
+                <div class="commission-count">8 ambassadors</div>
+                <div class="commission-pct" style="color:var(--tier4);">20%</div>
+              </div>
+              <div class="commission-tier-row">
+                <div class="commission-tier-info">
+                  <div class="commission-tier-name" style="color:var(--accent);">Athlete</div>
+                  <div class="commission-tier-req">5–8 sales per month · by invite</div>
+                </div>
+                <div class="commission-count">5 athletes</div>
+                <div class="commission-pct" style="color:var(--accent);">25%</div>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="countdown-block">
+                <div>
+                  <div class="countdown-label">Monthly Reset Countdown</div>
+                  <div class="countdown-sub">Tiers reset on June 1st, 2026</div>
+                </div>
+                <div class="countdown-timer" id="countdown-timer">20d 14h 22m</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top ambassadors this month -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Top 10 Ambassadors — May 2026</span>
+              <span style="font-size:11px;color:var(--text3);">11 days in · 20 remaining</span>
+            </div>
+            <div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Ambassador</th>
+                    <th>Sales</th>
+                    <th>Tier</th>
+                    <th>Projected</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="font-weight:700;color:var(--accent);">1</td>
+                    <td><div style="font-weight:600;">@jake_lifts</div><div style="font-size:11px;color:var(--text3);">Jake Morrison</div></td>
+                    <td><strong>14</strong></td>
+                    <td><span class="tier-badge tier-4">L4 · 20%</span></td>
+                    <td style="color:var(--green);font-weight:700;">~25</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:700;color:var(--accent);">2</td>
+                    <td><div style="font-weight:600;">@mia_fitness</div><div style="font-size:11px;color:var(--text3);">Mia Torres</div></td>
+                    <td><strong>12</strong></td>
+                    <td><span class="tier-badge tier-4">L4 · 20%</span></td>
+                    <td style="color:var(--green);font-weight:700;">~22</td>
+                  </tr>
+                  <tr>
+                    <td>3</td>
+                    <td><div style="font-weight:600;">@powerblock_sam</div></td>
+                    <td><strong>10</strong></td>
+                    <td><span class="tier-badge tier-3">L3 · 15%</span></td>
+                    <td style="font-weight:600;">~18</td>
+                  </tr>
+                  <tr>
+                    <td>4</td>
+                    <td><div style="font-weight:600;">@gainz_by_alex</div></td>
+                    <td><strong>8</strong></td>
+                    <td><span class="tier-badge tier-3">L3 · 15%</span></td>
+                    <td style="font-weight:600;">~14</td>
+                  </tr>
+                  <tr>
+                    <td>5</td>
+                    <td><div style="font-weight:600;">@carla_strong</div></td>
+                    <td><strong>7</strong></td>
+                    <td><span class="tier-badge tier-3">L3 · 15%</span></td>
+                    <td style="font-weight:600;">~12</td>
+                  </tr>
+                  <tr>
+                    <td>6</td>
+                    <td><div style="font-weight:600;">@obsidian_ryan</div></td>
+                    <td><strong>6</strong></td>
+                    <td><span class="tier-badge tier-2">L2 · 10%</span></td>
+                    <td style="font-weight:600;">~11</td>
+                  </tr>
+                  <tr>
+                    <td>7</td>
+                    <td><div style="font-weight:600;">@liftlife_kim</div></td>
+                    <td><strong>5</strong></td>
+                    <td><span class="tier-badge tier-2">L2 · 10%</span></td>
+                    <td style="font-weight:600;">~9</td>
+                  </tr>
+                  <tr>
+                    <td>8</td>
+                    <td><div style="font-weight:600;">@dan_physique</div></td>
+                    <td><strong>4</strong></td>
+                    <td><span class="tier-badge tier-2">L2 · 10%</span></td>
+                    <td style="font-weight:600;">~7</td>
+                  </tr>
+                  <tr>
+                    <td>9</td>
+                    <td><div style="font-weight:600;">@coach_tara</div></td>
+                    <td><strong>3</strong></td>
+                    <td><span class="tier-badge tier-1">L1 · 5%</span></td>
+                    <td style="font-weight:600;">~5</td>
+                  </tr>
+                  <tr>
+                    <td>10</td>
+                    <td><div style="font-weight:600;">@marc_cuts</div></td>
+                    <td><strong>2</strong></td>
+                    <td><span class="tier-badge tier-1">L1 · 5%</span></td>
+                    <td style="font-weight:600;">~4</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="card-footer" style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:12px;color:var(--text2);">Projected payout based on current velocity</span>
+              <span style="font-size:13px;font-weight:700;color:var(--green);">~$2,840 total</span>
+            </div>
+          </div>
+
+        </div><!-- /.grid-2 -->
+      </div><!-- /.section-block #commissions -->
+
+
+      <!-- ── SECTION 4: KLAVIYO FLOWS ── -->
+      <div class="section-block" id="klaviyo-flows">
+        <div class="section-header">
+          <div class="section-title"><span class="section-icon">⚡</span> Klaviyo Automation Flows</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm">📊 Flow Reports</button>
+            <button class="btn btn-secondary btn-sm">+ New Flow</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-header-left">
+              <span class="card-title">Active Flows</span>
+              <span class="table-count">7 flows managed by OpenClaw</span>
+            </div>
+            <span class="badge badge-green">All Active</span>
+          </div>
+
+          <div>
+            <!-- Welcome email -->
+            <div class="flow-row">
+              <div class="flow-icon">👋</div>
+              <div class="flow-info">
+                <div class="flow-name">Welcome Email</div>
+                <div class="flow-trigger">Trigger: New ambassador joins BixGrow</div>
+              </div>
+              <div class="flow-stats">
+                <div class="flow-stat">
+                  <div class="flow-stat-val">2h ago</div>
+                  <div class="flow-stat-lbl">Last Triggered</div>
+                </div>
+                <div class="flow-stat">
+                  <div class="flow-stat-val" style="color:var(--green);">62%</div>
+                  <div class="flow-stat-lbl">Open Rate</div>
+                </div>
+                <div class="flow-stat">
+                  <div class="flow-stat-val" style="color:var(--green);">$340</div>
+                  <div class="flow-stat-lbl">Rev Attributed</div>
+                </div>
+                <span class="badge badge-green">Active</span>
+              </div>
+            </div>
+
+            <!-- Sale notification -->
+            <div class="flow-row">
+              <div class="flow-icon">🎉</div>
+              <div class="flow-info">
+                <div class="flow-name">Sale Notification</div>
+                <div class="flow-trigger">Trigger: Ambassador generates a sale via referral link</div>
+              </div>
+              <div class="flow-stats">
+                <div class="flow-stat">
+                  <div class="flow-stat-val">18 min ago</div>
+                  <div class="flow-stat-lbl">Last Triggered</div>
+                </div>
+                <div class="flow-stat">
+                  <div class="flow-stat-val" style="color:var(--green);">84%</div>
+                  <div class="flow-stat-lbl">Open Rate</div>
+                </div>
+                <div class="flow-stat">
+                  <div class="flow-stat-val">—</div>
+                  <div class="flow-stat-lbl">Rev Attributed</div>
+                </div>
+                <span class="badge badge-green">Active</span>
+              </div>
+            </div>
+
+            <!-- Payment processed -->
+            <div class="flow-row">
+              <div class="flow-icon">💳</div>
+              <div class="flow-info">
+                <div class="flow-name">Payment Processed</div>
+                <div class="flow-trigger">Trigger: First week of month — commission payout confirmed</div>
+              </div>
+              <div class="flow-stats">
+                <div class="flow-stat">
+                  <div class="flow-stat-val">May 3</div>
+                  <div class="flow-stat-lbl">Last Triggered</div>
+                </div>
+                <div class="flow-stat">
+                  <div class="flow-stat-val" style="color:var(--green);">76%</div>
+                  <div class="flow-stat-lbl">Open Rate</div>
+                </div>
+                <div class="flow-stat">
+                  <div class="flow-stat-val">—</div>
+                  <div class="flow-stat-lbl">Rev Attributed</div>
+                </div>
+                <span class="badge badge-green">Active</span>
+              </div>
+            </div>
+
+            <!-- Product launch -->
+            <div class="flow-row">
+              <div class="flow-icon">🚀</div>
+              <div class="flow-info">
+                <div class="flow-name">Product Launch Announcement</div>
+                <div class="flow-trigger">Trigger: New product published in Shopify + OpenClaw detects launch</div>
+              </div>
+              <div class="flow-stats">
+                <div class="flow-stat">
+                  <div class="flow-stat-val">Apr 22</div>
+                  <div class="flow-stat-lbl">Last Triggered</div>
+                </div>
+                <div class="flow-stat">
+                  <div class="flow-stat-val" style="color:var(--green);">58%</div>
+                  <div class="flow-stat-lbl">Open Rate</div>
+                </div>
+                <div class="flow-stat">
+                  <div class="flow-stat-val" style="color:var(--green);">$1,840</div>
+                  <div class="flow-stat-lbl">Rev Attributed</div>
+                </div>
+                <span class="badge badge-green">Active</span>
+              </div>
+            </div>
+
+            <!-- Referral program invite -->
+            <div class="flow-row">
+              <div class="flow-icon">🔗</div>
+              <div class="flow-info">
+                <div class="flow-name">Referral Program Invite</div>
+                <div class="flow-trigger">Trigger: Customer completes purchase — invite to ambassador program</div>
+              </div>
+              <div class="flow-stats">
+                <div class="flow-stat">
+                  <div class="flow-stat-val">34 min ago</div>
+                  <div class="flow-stat-lbl">Last Triggered</div>
+                </div>
+                <div class="flow-stat">
+                  <div class="flow-stat-val" style="color:var(--blue);">41%</div>
+                  <div class="flow-stat-lbl">Open Rate</div>
+                </div>
+                <div class="flow-stat">
+                  <div class="flow-stat-val" style="color:var(--green);">$620</div>
+                  <div class="flow-stat-lbl">Rev Attributed</div>
+                </div>
+                <span class="badge badge-green">Active</span>
+              </div>
+            </div>
+
+            <!-- Post-purchase upsell -->
+            <div class="flow-row">
+              <div class="flow-icon">📦</div>
+              <div class="flow-info">
+                <div class="flow-name">Post-Purchase Upsell Sequence</div>
+                <div class="flow-trigger">Trigger: Order fulfilled — 3-email sequence over 14 days</div>
+              </div>
+              <div class="flow-stats">
+                <div class="flow-stat">
+                  <div class="flow-stat-val">1h ago</div>
+                  <div class="flow-stat-lbl">Last Triggered</div>
+                </div>
+                <div class="flow-stat">
+                  <div class="flow-stat-val" style="color:var(--blue);">34%</div>
+                  <div class="flow-stat-lbl">Open Rate</div>
+                </div>
+                <div class="flow-stat">
+                  <div class="flow-stat-val" style="color:var(--green);">$2,110</div>
+                  <div class="flow-stat-lbl">Rev Attributed</div>
+                </div>
+                <span class="badge badge-green">Active</span>
+              </div>
+            </div>
+
+            <!-- Win-back campaign -->
+            <div class="flow-row">
+              <div class="flow-icon">♻️</div>
+              <div class="flow-info">
+                <div class="flow-name">Win-Back Campaign</div>
+                <div class="flow-trigger">Trigger: Customer inactive 60+ days — re-engagement sequence</div>
+              </div>
+              <div class="flow-stats">
+                <div class="flow-stat">
+                  <div class="flow-stat-val">6h ago</div>
+                  <div class="flow-stat-lbl">Last Triggered</div>
+                </div>
+                <div class="flow-stat">
+                  <div class="flow-stat-val" style="color:var(--orange);">22%</div>
+                  <div class="flow-stat-lbl">Open Rate</div>
+                </div>
+                <div class="flow-stat">
+                  <div class="flow-stat-val" style="color:var(--green);">$480</div>
+                  <div class="flow-stat-lbl">Rev Attributed</div>
+                </div>
+                <span class="badge badge-green">Active</span>
+              </div>
+            </div>
+
+          </div><!-- /.flows -->
+        </div><!-- /.table-wrap -->
+      </div><!-- /.section-block #klaviyo-flows -->
+
+
+      <!-- ── SECTION 5: INVENTORY REORDER ALERTS ── -->
+      <div class="section-block" id="inventory-alerts">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-icon">📦</span> Inventory Reorder Alerts
+            <span class="badge badge-red" style="margin-left:4px;">3 Critical</span>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm">📥 Export</button>
+            <button class="btn btn-secondary btn-sm">⚙️ Set Thresholds</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:14px;">
+          <div style="display:flex;gap:24px;padding:14px 20px;background:var(--bg2);border-bottom:1px solid var(--border);flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;">
+              <div style="width:12px;height:12px;border-radius:50%;background:var(--green);"></div> 60+ days supply — Healthy
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;">
+              <div style="width:12px;height:12px;border-radius:50%;background:var(--orange);"></div> 30–60 days — Order Soon
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;">
+              <div style="width:12px;height:12px;border-radius:50%;background:var(--red);"></div> Under 30 days — Order Immediately
+            </div>
+            <div style="margin-left:auto;font-size:12px;color:var(--text3);font-weight:500;">⚠️ 60-day lead time from PDC</div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Current Stock</th>
+                <th>Daily Velocity</th>
+                <th>Days Remaining</th>
+                <th>Reorder Status</th>
+                <th>Units Needed</th>
+                <th>Est. Cost</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#FFF9F9;">
+                <td>
+                  <div style="font-weight:700;">Obsidian Pre-Workout 40sv</div>
+                  <div style="font-size:11px;color:var(--text3);">SKU: OBS-PW-40</div>
+                </td>
+                <td><strong>84</strong> units</td>
+                <td>7.0 / day</td>
+                <td><span class="days-pill days-red">12 days</span></td>
+                <td><span class="badge badge-red">🔴 Critical</span></td>
+                <td style="font-weight:700;color:var(--red);">500 units</td>
+                <td style="font-weight:700;">~$4,200</td>
+                <td><button class="reorder-btn urgent">⚡ Order Now</button></td>
+              </tr>
+              <tr style="background:#FFF9F9;">
+                <td>
+                  <div style="font-weight:700;">Obsidian Creatine 300g</div>
+                  <div style="font-size:11px;color:var(--text3);">SKU: OBS-CR-300</div>
+                </td>
+                <td><strong>196</strong> units</td>
+                <td>7.0 / day</td>
+                <td><span class="days-pill days-red">28 days</span></td>
+                <td><span class="badge badge-red">🔴 Critical</span></td>
+                <td style="font-weight:700;color:var(--red);">400 units</td>
+                <td style="font-weight:700;">~$2,800</td>
+                <td><button class="reorder-btn urgent">⚡ Order Now</button></td>
+              </tr>
+              <tr style="background:#FFFBF0;">
+                <td>
+                  <div style="font-weight:700;">Obsidian Whey 2lb</div>
+                  <div style="font-size:11px;color:var(--text3);">SKU: OBS-WH-2LB</div>
+                </td>
+                <td><strong>204</strong> units</td>
+                <td>6.0 / day</td>
+                <td><span class="days-pill days-red">34 days</span></td>
+                <td><span class="badge badge-red">🔴 Critical</span></td>
+                <td style="font-weight:700;color:var(--orange);">360 units</td>
+                <td style="font-weight:700;">~$5,400</td>
+                <td><button class="reorder-btn urgent">⚡ Order Now</button></td>
+              </tr>
+              <tr style="background:#FFFBF0;">
+                <td>
+                  <div style="font-weight:700;">Obsidian BCAA 30sv</div>
+                  <div style="font-size:11px;color:var(--text3);">SKU: OBS-BC-30</div>
+                </td>
+                <td><strong>312</strong> units</td>
+                <td>5.0 / day</td>
+                <td><span class="days-pill days-amber">42 days</span></td>
+                <td><span class="badge badge-orange">⚠ Order Soon</span></td>
+                <td style="font-weight:600;color:var(--orange);">300 units</td>
+                <td style="font-weight:600;">~$2,100</td>
+                <td><button class="reorder-btn">Schedule Order</button></td>
+              </tr>
+              <tr style="background:#FFFBF0;">
+                <td>
+                  <div style="font-weight:700;">Obsidian Electrolytes 60sv</div>
+                  <div style="font-size:11px;color:var(--text3);">SKU: OBS-EL-60</div>
+                </td>
+                <td><strong>270</strong> units</td>
+                <td>4.5 / day</td>
+                <td><span class="days-pill days-amber">60 days</span></td>
+                <td><span class="badge badge-orange">⚠ Order Soon</span></td>
+                <td style="font-weight:600;color:var(--orange);">270 units</td>
+                <td style="font-weight:600;">~$1,890</td>
+                <td><button class="reorder-btn">Schedule Order</button></td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="font-weight:700;">Obsidian Whey 5lb</div>
+                  <div style="font-size:11px;color:var(--text3);">SKU: OBS-WH-5LB</div>
+                </td>
+                <td><strong>480</strong> units</td>
+                <td>4.0 / day</td>
+                <td><span class="days-pill days-green">120 days</span></td>
+                <td><span class="badge badge-green">Healthy</span></td>
+                <td style="color:var(--text3);">—</td>
+                <td style="color:var(--text3);">—</td>
+                <td><button class="reorder-btn">View</button></td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="font-weight:700;">Obsidian Shaker Bottle</div>
+                  <div style="font-size:11px;color:var(--text3);">SKU: OBS-ACC-SHK</div>
+                </td>
+                <td><strong>620</strong> units</td>
+                <td>3.5 / day</td>
+                <td><span class="days-pill days-green">177 days</span></td>
+                <td><span class="badge badge-green">Healthy</span></td>
+                <td style="color:var(--text3);">—</td>
+                <td style="color:var(--text3);">—</td>
+                <td><button class="reorder-btn">View</button></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="card-footer" style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:12px;color:var(--text2);">Total critical reorder cost estimate</span>
+            <span style="font-size:14px;font-weight:800;color:var(--red);">~$12,400</span>
+          </div>
+
+        </div><!-- /.card -->
+      </div><!-- /.section-block #inventory-alerts -->
+
+
+      <!-- ── SECTION 6: ACTIVITY LOG ── -->
+      <div class="section-block" id="activity-log">
+        <div class="section-header">
+          <div class="section-title"><span class="section-icon">📋</span> OpenClaw Activity Log</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm">🔍 Filter</button>
+            <button class="btn btn-secondary btn-sm">📥 Export</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-header-left">
+              <span class="card-title">Recent Activity</span>
+              <span class="table-count">Last 20 actions</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;"></div>
+              <span style="font-size:11px;color:var(--green);font-weight:600;">Live</span>
+            </div>
+          </div>
+
+          <div>
+
+            <div class="log-item">
+              <div class="log-dot green"></div>
+              <div class="log-text"><strong>BixGrow Daily Sync</strong> — 47 ambassadors synced, 2 new tiers upgraded (L2→L3), 0 errors</div>
+              <div class="log-time">10:02 AM</div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot green"></div>
+              <div class="log-text"><strong>Daily Email Briefing</strong> — Sent to obsidianscaled@gmail.com + athlete manager · Delivered ✓</div>
+              <div class="log-time">10:00 AM</div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot blue"></div>
+              <div class="log-text"><strong>Klaviyo: Sale notification</strong> — @jake_lifts made sale #4821 ($142) · Email sent automatically</div>
+              <div class="log-time">9:54 AM</div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot orange"></div>
+              <div class="log-text"><strong>Meta ROAS Alert</strong> — Campaign Alpha dropped to 1.8x (threshold: 2.0x) · Alert logged, email queued</div>
+              <div class="log-time">9:47 AM</div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot blue"></div>
+              <div class="log-text"><strong>Klaviyo: Referral invite</strong> — Post-purchase email triggered for order #7734 (new customer)</div>
+              <div class="log-time">9:41 AM</div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot red"></div>
+              <div class="log-text"><strong>Inventory Alert</strong> — Obsidian Pre-Workout 40sv has 12 days remaining · Reorder threshold breached (60-day supply)</div>
+              <div class="log-time">9:30 AM</div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot navy"></div>
+              <div class="log-text"><strong>Klaviyo Ambassador Sync</strong> — Checked for new ambassadors · 0 new, 47 verified active in list</div>
+              <div class="log-time">9:00 AM</div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot orange"></div>
+              <div class="log-text"><strong>Inventory Alert</strong> — Obsidian Creatine 300g has 28 days remaining · Below 60-day lead time threshold</div>
+              <div class="log-time">8:30 AM</div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot green"></div>
+              <div class="log-text"><strong>PDC Google Drive Sync</strong> — 2 new PDC PDFs detected and imported: "Batch #442 COA.pdf", "Whey 2lb Spec.pdf"</div>
+              <div class="log-time">6:02 AM</div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot blue"></div>
+              <div class="log-text"><strong>Klaviyo: Post-purchase upsell</strong> — Email #2 of 3 sent to 14 customers from order cohort May 4</div>
+              <div class="log-time">Yesterday 8:00 PM</div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot navy"></div>
+              <div class="log-text"><strong>Meta Ads Monitor</strong> — Routine check complete · Account ROAS 2.4x — all campaigns healthy at time of check</div>
+              <div class="log-time">Yesterday 6:30 PM</div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot blue"></div>
+              <div class="log-text"><strong>Klaviyo: New ambassador added</strong> — @sarah_wellness joined via BixGrow · Welcome email triggered automatically</div>
+              <div class="log-time">Yesterday 4:12 PM</div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot green"></div>
+              <div class="log-text"><strong>BixGrow Daily Sync</strong> — 45 ambassadors synced successfully, 1 new ambassador detected (@sarah_wellness)</div>
+              <div class="log-time">Yesterday 10:01 AM</div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot navy"></div>
+              <div class="log-text"><strong>Referral Program Monitor</strong> — 3 new referral conversions tracked · @mia_fitness (×2), @powerblock_sam (×1)</div>
+              <div class="log-time">Yesterday 10:00 AM</div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot orange"></div>
+              <div class="log-text"><strong>Inventory Alert</strong> — Obsidian Whey 2lb fell below 60-day threshold · 34 days remaining at current velocity</div>
+              <div class="log-time">Yesterday 9:15 AM</div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot blue"></div>
+              <div class="log-text"><strong>Klaviyo: Win-back campaign</strong> — 22 customers triggered re-engagement flow (60+ days inactive)</div>
+              <div class="log-time">Yesterday 8:00 AM</div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot green"></div>
+              <div class="log-text"><strong>Weekly Content Calendar</strong> — Content calendar distributed to 47 ambassadors for week of May 12–18</div>
+              <div class="log-time">Mon 8:00 AM</div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot navy"></div>
+              <div class="log-text"><strong>Klaviyo Ambassador Sync</strong> — Tier change detected: @gainz_by_alex promoted from L2 → L3 · Profile updated</div>
+              <div class="log-time">Mon 7:45 AM</div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot green"></div>
+              <div class="log-text"><strong>PDC Google Drive Sync</strong> — No new files detected in Obsidian PDC Drive folder</div>
+              <div class="log-time">Mon 6:00 AM</div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot gray"></div>
+              <div class="log-text"><strong>Meta Ads Monitor</strong> — Routine check complete · All campaigns above 2.0x ROAS threshold</div>
+              <div class="log-time">Sun 10:30 PM</div>
+            </div>
+
+          </div><!-- /.log items -->
+        </div><!-- /.table-wrap -->
+      </div><!-- /.section-block #activity-log -->
+
+    </div><!-- /.content -->
+  </div><!-- /.main -->
+</div><!-- /.app -->
+
+<style>
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+</style>
+
+<script>
+  /* ── TOGGLE HANDLER ── */
+  function toggleAutomation(checkbox, name) {
+    const row = checkbox.closest('.automation-row');
+    if (!checkbox.checked) {
+      row.style.opacity = '0.55';
+      console.log(name + ' paused');
+    } else {
+      row.style.opacity = '1';
+      console.log(name + ' resumed');
+    }
+  }
+
+  /* ── COUNTDOWN TIMER ── */
+  function updateCountdown() {
+    const reset = new Date('2026-06-01T00:00:00');
+    const now = new Date();
+    const diff = reset - now;
+    if (diff <= 0) { document.getElementById('countdown-timer').textContent = 'Resetting…'; return; }
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    document.getElementById('countdown-timer').textContent = d + 'd ' + h + 'h ' + m + 'm';
+  }
+  updateCountdown();
+  setInterval(updateCountdown, 60000);
+
+  /* ── SMOOTH SCROLL FOR SIDEBAR ANCHORS ── */
+  document.querySelectorAll('.nav-item[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        a.classList.add('active');
+      }
+    });
+  });
+
+  /* ── HIGHLIGHT ACTIVE SECTION ON SCROLL ── */
+  const sections = document.querySelectorAll('.section-block[id]');
+  const sidebarAnchors = document.querySelectorAll('.nav-item[href^="#"]');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        sidebarAnchors.forEach(a => {
+          a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id);
+        });
+      }
+    });
+  }, { threshold: 0.25 });
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

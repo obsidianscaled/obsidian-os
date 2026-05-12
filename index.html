@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Obsidian OS — Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #FFFFFF;
+    --bg2:       #F8F9FC;
+    --bg3:       #F1F3F7;
+    --bg4:       #E9ECF2;
+    --border:    #E5E7EB;
+    --border2:   #D1D5DB;
+    --text:      #0A0A0A;
+    --text2:     #6B7280;
+    --text3:     #9CA3AF;
+    --accent:    #1E3A5F;
+    --accent2:   #2E5F9E;
+    --accent-dim:  rgba(30,58,95,0.06);
+    --accent-dim2: rgba(30,58,95,0.12);
+    --red:     #DC2626;
+    --orange:  #D97706;
+    --blue:    #2563EB;
+    --green:   #059669;
+    --radius:  8px;
+    --radius2: 12px;
+    --shadow:  0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow2: 0 4px 12px rgba(0,0,0,0.08);
+    --shadow3: 0 8px 24px rgba(0,0,0,0.10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg2);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+  /* ── LAYOUT ── */
+  .app { display: flex; height: 100vh; overflow: hidden; }
+
+  .sidebar {
+    width: 224px;
+    min-width: 224px;
+    background: var(--bg);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; background: var(--bg2); }
+
+  /* ── SIDEBAR ── */
+  .brand { padding: 22px 20px 18px; border-bottom: 1px solid var(--border); }
+  .brand-name { font-size: 17px; font-weight: 800; letter-spacing: 0.06em; color: var(--accent); text-transform: uppercase; }
+  .brand-sub { font-size: 11px; color: var(--text3); letter-spacing: 0.02em; margin-top: 2px; font-weight: 500; }
+
+  .nav { padding: 14px 10px; flex: 1; }
+  .nav-section { margin-bottom: 22px; }
+  .nav-label { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); padding: 4px 10px; margin-bottom: 3px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 10px; border-radius: var(--radius);
+    cursor: pointer; color: var(--text2); font-size: 13.5px; font-weight: 500;
+    transition: all 0.12s; border: none; background: none; width: 100%;
+    text-align: left; position: relative; text-decoration: none;
+  }
+  .nav-item:hover { background: var(--bg2); color: var(--text); }
+  .nav-item.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: 0; top: 4px; bottom: 4px;
+    width: 3px; background: var(--accent); border-radius: 0 2px 2px 0;
+  }
+  .nav-item .icon { width: 16px; text-align: center; font-size: 14px; flex-shrink: 0; opacity: 0.7; }
+  .nav-item.active .icon { opacity: 1; }
+  .nav-badge {
+    margin-left: auto; background: #FEF3C7; color: #92400E;
+    font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px;
+    min-width: 18px; text-align: center; border: 1px solid #FDE68A;
+  }
+  .nav-badge.red { background: #FEF2F2; color: #DC2626; border-color: #FECACA; }
+  .nav-badge.green { background: #ECFDF5; color: #059669; border-color: #A7F3D0; }
+
+  .sidebar-footer { padding: 14px 20px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text3); font-weight: 500; }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    background: var(--bg); border-bottom: 1px solid var(--border);
+    padding: 0 28px; height: 60px; display: flex; align-items: center;
+    justify-content: space-between; flex-shrink: 0;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar-title { font-size: 16px; font-weight: 700; color: var(--text); }
+  .topbar-sub { font-size: 12px; color: var(--text3); margin-top: 1px; font-weight: 400; }
+  .topbar-right { display: flex; align-items: center; gap: 8px; }
+
+  /* ── CONTENT ── */
+  .content { padding: 28px; flex: 1; }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, var(--accent) 0%, #2E5F9E 60%, #1a4a7a 100%);
+    border-radius: var(--radius2);
+    padding: 40px 44px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow3);
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 280px; height: 280px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: 40%;
+    width: 360px; height: 360px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+  }
+  .hero-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 10px;
+  }
+  .hero-logo {
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #fff;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .hero-tagline {
+    font-size: 15px;
+    color: rgba(255,255,255,0.65);
+    font-weight: 400;
+    margin-bottom: 28px;
+    max-width: 480px;
+  }
+  .hero-greeting {
+    font-size: 16px;
+    color: rgba(255,255,255,0.9);
+    font-weight: 600;
+  }
+  .hero-greeting span { color: #fff; }
+  .hero-date {
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    margin-top: 3px;
+    font-weight: 400;
+  }
+
+  /* ── SUMMARY STRIP ── */
+  .summary-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .strip-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius2);
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .strip-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 3px;
+  }
+  .strip-card.revenue::before { background: var(--green); }
+  .strip-card.automations::before { background: var(--accent); }
+  .strip-card.approvals::before { background: var(--orange); }
+  .strip-card.roas::before { background: var(--blue); }
+  .strip-icon { font-size: 20px; margin-bottom: 8px; }
+  .strip-value {
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .strip-card.revenue .strip-value { color: var(--green); }
+  .strip-card.automations .strip-value { color: var(--accent); }
+  .strip-card.approvals .strip-value { color: var(--orange); }
+  .strip-card.roas .strip-value { color: var(--blue); }
+  .strip-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+  .strip-delta { font-size: 11px; margin-top: 5px; color: var(--text3); }
+  .strip-delta.up { color: var(--green); font-weight: 600; }
+
+  /* ── EMAIL STATUS BANNER ── */
+  .email-banner {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius2);
+    padding: 14px 20px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow);
+  }
+  .email-banner-left { display: flex; align-items: center; gap: 12px; }
+  .email-banner-icon {
+    width: 36px; height: 36px;
+    border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+  .email-banner-icon.sent { background: #ECFDF5; }
+  .email-banner-icon.pending { background: #EFF6FF; }
+  .email-banner-title { font-size: 13.5px; font-weight: 700; color: var(--text); }
+  .email-banner-sub { font-size: 12px; color: var(--text3); margin-top: 1px; }
+  .email-status-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 700;
+  }
+  .email-status-chip.sent { background: #ECFDF5; color: var(--green); border: 1px solid #A7F3D0; }
+  .email-status-chip.pending { background: #EFF6FF; color: var(--blue); border: 1px solid #BFDBFE; }
+
+  /* ── NAV CARDS ── */
+  .nav-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+  .nav-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius2);
+    padding: 28px 26px;
+    text-decoration: none;
+    color: var(--text);
+    box-shadow: var(--shadow);
+    transition: all 0.18s;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .nav-card:hover {
+    box-shadow: var(--shadow3);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .nav-card::after {
+    content: '→';
+    position: absolute;
+    bottom: 26px; right: 26px;
+    font-size: 18px;
+    color: var(--border2);
+    transition: all 0.18s;
+  }
+  .nav-card:hover::after { color: var(--accent); transform: translateX(3px); }
+  .nav-card-stripe {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .nav-card:nth-child(1) .nav-card-stripe { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .nav-card:nth-child(2) .nav-card-stripe { background: linear-gradient(90deg, var(--green), #34d399); }
+  .nav-card:nth-child(3) .nav-card-stripe { background: linear-gradient(90deg, #7C3AED, #a78bfa); }
+  .nav-card-icon {
+    width: 48px; height: 48px;
+    border-radius: var(--radius2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+  }
+  .nav-card:nth-child(1) .nav-card-icon { background: var(--accent-dim); }
+  .nav-card:nth-child(2) .nav-card-icon { background: #ECFDF5; }
+  .nav-card:nth-child(3) .nav-card-icon { background: #F5F3FF; }
+  .nav-card-name { font-size: 17px; font-weight: 800; color: var(--accent); margin-bottom: 6px; letter-spacing: 0.01em; }
+  .nav-card-desc { font-size: 13px; color: var(--text2); line-height: 1.55; max-width: 220px; flex: 1; }
+  .nav-card-meta {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .nav-card-chip {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: var(--bg2);
+    color: var(--text3);
+    border: 1px solid var(--border);
+  }
+
+  /* ── BOTTOM ROW ── */
+  .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius2); box-shadow: var(--shadow); overflow: hidden;
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+  }
+  .card-title { font-size: 13px; font-weight: 700; color: var(--text); }
+  .card-body { padding: 20px; }
+
+  /* ── QUICK LINKS ── */
+  .quick-link {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+    text-decoration: none; color: var(--text);
+    transition: color 0.1s;
+  }
+  .quick-link:last-child { border-bottom: none; }
+  .quick-link:hover { color: var(--accent); }
+  .quick-link-icon {
+    width: 32px; height: 32px; border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; background: var(--bg2); flex-shrink: 0;
+  }
+  .quick-link-name { font-size: 13px; font-weight: 600; }
+  .quick-link-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+  .quick-link-arrow { margin-left: auto; font-size: 13px; color: var(--border2); }
+  .quick-link:hover .quick-link-arrow { color: var(--accent); }
+
+  /* ── ACTIVITY FEED ── */
+  .activity-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0; margin-top: 5px;
+  }
+  .activity-dot.green { background: var(--green); }
+  .activity-dot.blue { background: var(--blue); }
+  .activity-dot.orange { background: var(--orange); }
+  .activity-dot.red { background: var(--red); }
+  .activity-dot.navy { background: var(--accent); }
+  .activity-text { font-size: 12.5px; color: var(--text); flex: 1; line-height: 1.45; }
+  .activity-text strong { font-weight: 600; }
+  .activity-time { font-size: 11px; color: var(--text3); white-space: nowrap; padding-left: 8px; flex-shrink: 0; }
+
+  /* ── BADGE ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  }
+  .badge-green { background: #ECFDF5; color: var(--green); border: 1px solid #A7F3D0; }
+  .badge-orange { background: #FFFBEB; color: var(--orange); border: 1px solid #FDE68A; }
+  .badge-blue { background: #EFF6FF; color: var(--blue); border: 1px solid #BFDBFE; }
+  .badge-navy { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(30,58,95,0.2); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1100px) {
+    .nav-cards { grid-template-columns: 1fr 1fr; }
+    .summary-strip { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 800px) {
+    .sidebar { width: 60px; min-width: 60px; }
+    .brand-name, .brand-sub { display: none; }
+    .nav-item span:not(.icon) { display: none; }
+    .nav-label, .nav-badge { display: none; }
+    .nav-cards { grid-template-columns: 1fr; }
+    .bottom-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="brand">
+      <div class="brand-name">Obsidian</div>
+      <div class="brand-sub">Operations Suite</div>
+    </div>
+    <div class="nav">
+      <div class="nav-section">
+        <div class="nav-label">Pages</div>
+        <a class="nav-item active" href="index.html">
+          <span class="icon">⌂</span><span>Home</span>
+        </a>
+        <a class="nav-item" href="command-dashboard.html">
+          <span class="icon">📊</span><span>Command Dashboard</span>
+        </a>
+        <a class="nav-item" href="ambassador-cms.html">
+          <span class="icon">🏅</span><span>Ambassador CMS</span>
+        </a>
+        <a class="nav-item" href="openclaw-automations.html">
+          <span class="icon">⚙️</span><span>OpenClaw Automations</span>
+        </a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Today</div>
+        <a class="nav-item" href="command-dashboard.html#revenue">
+          <span class="icon">◈</span><span>Revenue</span>
+        </a>
+        <a class="nav-item" href="command-dashboard.html#alerts">
+          <span class="icon">⚑</span><span>Alerts</span>
+          <span class="nav-badge red" id="sidebar-alerts-badge">4</span>
+        </a>
+        <a class="nav-item" href="ambassador-cms.html">
+          <span class="icon">⊡</span><span>Pending Approvals</span>
+          <span class="nav-badge" id="sidebar-approvals-badge">7</span>
+        </a>
+      </div>
+    </div>
+    <div class="sidebar-footer">v1.0 · Obsidian OS</div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div>
+          <div class="topbar-title">Good morning, Nick</div>
+          <div class="topbar-sub" id="topbar-date-sub">Loading...</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span style="font-size:12px;color:var(--text3);font-weight:500;" id="topbar-clock">—</span>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- HERO -->
+      <div class="hero">
+        <div class="hero-eyebrow">Operations Command Center</div>
+        <div class="hero-logo">Obsidian OS</div>
+        <div class="hero-tagline">Everything you need to run the business — revenue, ambassadors, automations, and ads — in one place.</div>
+        <div class="hero-greeting">Welcome back, <span id="greeting-name">Nick</span></div>
+        <div class="hero-date" id="hero-date">Loading date...</div>
+      </div>
+
+      <!-- SUMMARY STRIP -->
+      <div class="summary-strip">
+        <div class="strip-card revenue">
+          <div class="strip-icon">💰</div>
+          <div class="strip-value" id="strip-revenue">$14,820</div>
+          <div class="strip-label">Today's Revenue</div>
+          <div class="strip-delta up" id="strip-revenue-delta">↑ +$2,140 vs yesterday</div>
+        </div>
+        <div class="strip-card automations">
+          <div class="strip-icon">⚙️</div>
+          <div class="strip-value" id="strip-automations">8</div>
+          <div class="strip-label">Active Automations</div>
+          <div class="strip-delta up">All running normally</div>
+        </div>
+        <div class="strip-card approvals">
+          <div class="strip-icon">📋</div>
+          <div class="strip-value" id="strip-approvals">7</div>
+          <div class="strip-label">Pending Approvals</div>
+          <div class="strip-delta" style="color:var(--orange);font-weight:600;">Needs attention</div>
+        </div>
+        <div class="strip-card roas">
+          <div class="strip-icon">📈</div>
+          <div class="strip-value" id="strip-roas">3.2×</div>
+          <div class="strip-label">Meta ROAS</div>
+          <div class="strip-delta up">↑ Above 3.0× target</div>
+        </div>
+      </div>
+
+      <!-- DAILY EMAIL STATUS -->
+      <div class="email-banner" id="email-banner">
+        <div class="email-banner-left">
+          <div class="email-banner-icon sent" id="email-icon">✉️</div>
+          <div>
+            <div class="email-banner-title" id="email-title">Daily 10 AM Email</div>
+            <div class="email-banner-sub" id="email-sub">Loading status...</div>
+          </div>
+        </div>
+        <div id="email-chip" class="email-status-chip sent">✓ Sent</div>
+      </div>
+
+      <!-- NAV CARDS -->
+      <div class="nav-cards">
+        <a class="nav-card" href="ambassador-cms.html">
+          <div class="nav-card-stripe"></div>
+          <div class="nav-card-icon">🏅</div>
+          <div class="nav-card-name">Ambassador CMS</div>
+          <div class="nav-card-desc">Manage your 100+ ambassadors and content. Review submissions, approve assets, and track performance by tier.</div>
+          <div class="nav-card-meta">
+            <span class="nav-card-chip">100+ ambassadors</span>
+            <span class="nav-card-chip">Submissions</span>
+            <span class="nav-card-chip">Calendar</span>
+          </div>
+        </a>
+        <a class="nav-card" href="command-dashboard.html">
+          <div class="nav-card-stripe"></div>
+          <div class="nav-card-icon">📊</div>
+          <div class="nav-card-name">Command Dashboard</div>
+          <div class="nav-card-desc">Live analytics, revenue tracking, ads performance, Shopify inventory, and Klaviyo email metrics.</div>
+          <div class="nav-card-meta">
+            <span class="nav-card-chip">Revenue</span>
+            <span class="nav-card-chip">Meta Ads</span>
+            <span class="nav-card-chip">Inventory</span>
+          </div>
+        </a>
+        <a class="nav-card" href="openclaw-automations.html">
+          <div class="nav-card-stripe"></div>
+          <div class="nav-card-icon">⚙️</div>
+          <div class="nav-card-name">OpenClaw Automations</div>
+          <div class="nav-card-desc">Automation control center — monitor flows, commissions, Klaviyo sequences, and inventory alerts.</div>
+          <div class="nav-card-meta">
+            <span class="nav-card-chip">8 automations</span>
+            <span class="nav-card-chip">Klaviyo</span>
+            <span class="nav-card-chip">Commissions</span>
+          </div>
+        </a>
+      </div>
+
+      <!-- BOTTOM ROW -->
+      <div class="bottom-row">
+
+        <!-- QUICK LINKS -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Quick Links</span>
+          </div>
+          <div class="card-body" style="padding: 8px 20px;">
+            <a class="quick-link" href="command-dashboard.html#revenue">
+              <div class="quick-link-icon">◈</div>
+              <div>
+                <div class="quick-link-name">Revenue Tracker</div>
+                <div class="quick-link-sub">Daily, weekly, monthly progress to goal</div>
+              </div>
+              <div class="quick-link-arrow">→</div>
+            </a>
+            <a class="quick-link" href="command-dashboard.html#meta">
+              <div class="quick-link-icon">▲</div>
+              <div>
+                <div class="quick-link-name">Meta Ads Performance</div>
+                <div class="quick-link-sub">ROAS, spend, CPA by campaign</div>
+              </div>
+              <div class="quick-link-arrow">→</div>
+            </a>
+            <a class="quick-link" href="ambassador-cms.html">
+              <div class="quick-link-icon">⊡</div>
+              <div>
+                <div class="quick-link-name">Content Submissions</div>
+                <div class="quick-link-sub">7 items waiting for approval</div>
+              </div>
+              <div class="quick-link-arrow">→</div>
+            </a>
+            <a class="quick-link" href="openclaw-automations.html#email-preview">
+              <div class="quick-link-icon">✉️</div>
+              <div>
+                <div class="quick-link-name">Daily Email Preview</div>
+                <div class="quick-link-sub">View today's ambassador email</div>
+              </div>
+              <div class="quick-link-arrow">→</div>
+            </a>
+            <a class="quick-link" href="command-dashboard.html#inventory">
+              <div class="quick-link-icon">▣</div>
+              <div>
+                <div class="quick-link-name">Inventory Alerts</div>
+                <div class="quick-link-sub">3 SKUs below reorder threshold</div>
+              </div>
+              <div class="quick-link-arrow">→</div>
+            </a>
+            <a class="quick-link" href="openclaw-automations.html#commissions">
+              <div class="quick-link-icon">💰</div>
+              <div>
+                <div class="quick-link-name">Commission Tracker</div>
+                <div class="quick-link-sub">Ambassador payouts this month</div>
+              </div>
+              <div class="quick-link-arrow">→</div>
+            </a>
+          </div>
+        </div>
+
+        <!-- ACTIVITY FEED -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">This Morning</span>
+            <span style="font-size:11px;color:var(--text3);" id="feed-time">Live</span>
+          </div>
+          <div class="card-body" style="padding: 8px 20px;">
+            <div class="activity-item">
+              <div class="activity-dot green"></div>
+              <div class="activity-text"><strong>$14,820</strong> in revenue so far today — pacing ahead of yesterday's $12,680 at this time</div>
+              <div class="activity-time">now</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot navy"></div>
+              <div class="activity-text">Daily 10 AM ambassador email sent to <strong>2,847 subscribers</strong> — 38.4% open rate so far</div>
+              <div class="activity-time">10:02 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot orange"></div>
+              <div class="activity-text"><strong>7 content submissions</strong> from ambassadors are pending your approval in the CMS</div>
+              <div class="activity-time">9:45 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot blue"></div>
+              <div class="activity-text">Meta Ads ROAS at <strong>3.2×</strong> — Coastal Summer campaign performing above 3.0× target</div>
+              <div class="activity-time">9:30 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot red"></div>
+              <div class="activity-text"><strong>3 SKUs</strong> below reorder threshold: Coral Reef Capsule (14 units), Wave Rider Tee (8 units)</div>
+              <div class="activity-time">8:15 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot green"></div>
+              <div class="activity-text">All <strong>8 OpenClaw automations</strong> running normally — commission flow processed 23 events overnight</div>
+              <div class="activity-time">7:00 AM</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+  // ── DATE / TIME ──────────────────────────────────────────
+  function updateClock() {
+    const now = new Date();
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const dayName = days[now.getDay()];
+    const monthName = months[now.getMonth()];
+    const dateStr = `${dayName}, ${monthName} ${now.getDate()}, ${now.getFullYear()}`;
+    const h = now.getHours(), m = now.getMinutes();
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 || 12;
+    const timeStr = `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+
+    document.getElementById('topbar-date-sub').textContent = dateStr;
+    document.getElementById('hero-date').textContent = dateStr;
+    document.getElementById('topbar-clock').textContent = timeStr;
+
+    // email status
+    const emailSentHour = 10, emailSentMin = 2;
+    const totalNowMins = h * 60 + m;
+    const totalSentMins = emailSentHour * 60 + emailSentMin;
+    const emailTitle = document.getElementById('email-title');
+    const emailSub = document.getElementById('email-sub');
+    const emailChip = document.getElementById('email-chip');
+    const emailIcon = document.getElementById('email-icon');
+
+    if (totalNowMins >= totalSentMins) {
+      emailTitle.textContent = 'Daily 10 AM Email';
+      emailSub.textContent = `Sent today at 10:02 AM — 2,847 subscribers · 38.4% open rate`;
+      emailChip.textContent = '✓ Sent today at 10:02 AM';
+      emailChip.className = 'email-status-chip sent';
+      emailIcon.textContent = '✉️';
+      emailIcon.className = 'email-banner-icon sent';
+    } else {
+      const minsUntil = totalSentMins - totalNowMins;
+      const hoursUntil = Math.floor(minsUntil / 60);
+      const minsRem = minsUntil % 60;
+      const untilStr = hoursUntil > 0 ? `${hoursUntil}h ${minsRem}m` : `${minsRem}m`;
+      emailTitle.textContent = 'Daily 10 AM Email';
+      emailSub.textContent = `Scheduled to send in ${untilStr}`;
+      emailChip.textContent = `⏱ Sending in ${untilStr}`;
+      emailChip.className = 'email-status-chip pending';
+      emailIcon.textContent = '⏰';
+      emailIcon.className = 'email-banner-icon pending';
+    }
+  }
+
+  updateClock();
+  setInterval(updateClock, 30000);
+</script>
+</body>
+</html>

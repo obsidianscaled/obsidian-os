@@ -119,12 +119,12 @@
     position: relative;
   }
   .nav-item:hover { background: var(--bg2); color: var(--text); }
-  .nav-item.active {
+  .nav-item.active, .nav-item.active-page {
     background: var(--accent-dim);
     color: var(--accent);
     font-weight: 600;
   }
-  .nav-item.active::before {
+  .nav-item.active::before, .nav-item.active-page::before {
     content: '';
     position: absolute;
     left: 0; top: 4px; bottom: 4px;
@@ -804,6 +804,21 @@
       <div class="brand-sub">Ambassador CMS</div>
     </div>
     <div class="nav">
+      <div class="nav-section">
+        <div class="nav-label">Pages</div>
+        <a class="nav-item" href="index.html">
+          <span class="icon">⌂</span><span>Home</span>
+        </a>
+        <a class="nav-item" href="command-dashboard.html">
+          <span class="icon">📊</span><span>Command Dashboard</span>
+        </a>
+        <a class="nav-item active-page" href="ambassador-cms.html">
+          <span class="icon">🏅</span><span>Ambassador CMS</span>
+        </a>
+        <a class="nav-item" href="openclaw-automations.html">
+          <span class="icon">⚙️</span><span>OpenClaw Automations</span>
+        </a>
+      </div>
       <div class="nav-section">
         <div class="nav-label">Overview</div>
         <button class="nav-item active" data-view="dashboard" onclick="switchView('dashboard')">

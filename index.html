@@ -696,5 +696,161 @@
   updateClock();
   setInterval(updateClock, 30000);
 </script>
+
+<!-- ── LIVE API INTEGRATION ─────────────────────────────── -->
+<script>
+  // ── API CONSTANTS ──────────────────────────────────────
+  const SHOPIFY_TOKEN = 'PLACEHOLDER_SHOPIFY_TOKEN';
+  const SHOPIFY_STORE = 'obsidianscaled.myshopify.com';
+  const META_TOKEN = 'PLACEHOLDER_META_TOKEN';
+  const META_AD_ACCOUNT = 'PLACEHOLDER_AD_ACCOUNT_ID';
+  const KLAVIYO_KEY = 'PLACEHOLDER_KLAVIYO_KEY';
+
+  const CACHE_TTL = 300000; // 5 minutes
+
+  function getCached(key) {
+    try {
+      const item = localStorage.getItem('obsidian_' + key);
+      if (!item) return null;
+      const p = JSON.parse(item);
+      return Date.now() - p.ts < CACHE_TTL ? p.data : null;
+    } catch (e) { return null; }
+  }
+
+  function setCached(key, data) {
+    try { localStorage.setItem('obsidian_' + key, JSON.stringify({ ts: Date.now(), data })); } catch (e) {}
+  }
+
+  function getCacheAgeMins(key) {
+    try {
+      const item = localStorage.getItem('obsidian_' + key);
+      return item ? Math.floor((Date.now() - JSON.parse(item).ts) / 60000) : null;
+    } catch (e) { return null; }
+  }
+
+  function getStaleData(key) {
+    try { const i = localStorage.getItem('obsidian_' + key); return i ? JSON.parse(i).data : null; } catch (e) { return null; }
+  }
+
+  function isoDate(daysAgo) {
+    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - daysAgo);
+    return d.toISOString().replace('.000Z', '-00:00');
+  }
+
+  function fmtMoney(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
+
+  // ── SHOPIFY ────────────────────────────────────────────
+  async function fetchShopifyIndex(path, cacheKey) {
+    const cached = getCached(cacheKey);
+    if (cached) return { data: cached, fromCache: true };
+    const url = `https://${SHOPIFY_STORE}/admin/api/2024-01${path}`;
+    const res = await fetch(url, { headers: { 'X-Shopify-Access-Token': SHOPIFY_TOKEN } });
+    if (!res.ok) throw new Error('Shopify ' + res.status);
+    const data = await res.json();
+    setCached(cacheKey, data);
+    return { data, fromCache: false };
+  }
+
+  // ── META ───────────────────────────────────────────────
+  async function fetchMetaIndex(endpoint, cacheKey) {
+    const cached = getCached(cacheKey);
+    if (cached) return { data: cached, fromCache: true };
+    const url = `https://graph.facebook.com/v19.0/${endpoint}&access_token=${META_TOKEN}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Meta ' + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error('Meta: ' + data.error.message);
+    setCached(cacheKey, data);
+    return { data, fromCache: false };
+  }
+
+  function calcRevIndex(orders) {
+    return (orders || []).reduce((s, o) => s + parseFloat(o.total_price || 0), 0);
+  }
+
+  function calcROASIndex(d) {
+    if (!d || !d.data || !d.data[0]) return null;
+    const row = d.data[0];
+    const spend = parseFloat(row.spend || 0);
+    if (!spend) return null;
+    const rev = (row.action_values || []).reduce((s,a) => a.action_type==='purchase' ? s+parseFloat(a.value||0) : s, 0);
+    return rev / spend;
+  }
+
+  // ── LIVE BADGE HELPERS ─────────────────────────────────
+  function setLiveBadgeIndex(id) {
+    const e = document.getElementById(id);
+    if (e) e.innerHTML = ' <span style="display:inline-flex;align-items:center;font-size:10px;font-weight:700;color:#059669;background:#ECFDF5;border:1px solid #A7F3D0;border-radius:20px;padding:2px 8px;margin-left:4px;vertical-align:middle;">● LIVE</span>';
+  }
+
+  function setStaleBadgeIndex(id, mins) {
+    const e = document.getElementById(id);
+    const txt = mins !== null ? `↻ ${mins}m ago` : '↻ Cached';
+    if (e) e.innerHTML += ` <span style="display:inline-flex;font-size:10px;font-weight:600;color:#9CA3AF;background:#F1F3F7;border:1px solid #D1D5DB;border-radius:20px;padding:2px 8px;margin-left:4px;vertical-align:middle;">${txt}</span>`;
+  }
+
+  // ── LOAD REVENUE ───────────────────────────────────────
+  async function loadIndexRevenue() {
+    try {
+      const r = await fetchShopifyIndex(
+        `/orders.json?status=any&limit=250&created_at_min=${isoDate(0)}`,
+        'shopify_today'
+      );
+      const orders = r.data.orders || [];
+      const rev = calcRevIndex(orders);
+      const revenueEl = document.getElementById('strip-revenue');
+      const deltaEl = document.getElementById('strip-revenue-delta');
+      if (revenueEl) revenueEl.textContent = fmtMoney(rev);
+      if (deltaEl) deltaEl.textContent = orders.length + ' orders today';
+
+      const labelEl = document.querySelector('.strip-card.revenue .strip-label');
+      if (labelEl) {
+        if (r.fromCache) setStaleBadgeIndex('strip-revenue', getCacheAgeMins('shopify_today'));
+        else setLiveBadgeIndex('strip-revenue');
+      }
+    } catch (e) {
+      console.warn('Index Shopify failed:', e);
+      const stale = getStaleData('shopify_today');
+      if (stale) {
+        const rev = calcRevIndex(stale.orders || []);
+        const revenueEl = document.getElementById('strip-revenue');
+        if (revenueEl) revenueEl.textContent = fmtMoney(rev);
+        setStaleBadgeIndex('strip-revenue', getCacheAgeMins('shopify_today'));
+      }
+    }
+  }
+
+  // ── LOAD ROAS ──────────────────────────────────────────
+  async function loadIndexROAS() {
+    try {
+      const r = await fetchMetaIndex(
+        `act_${META_AD_ACCOUNT}/insights?fields=spend,actions,action_values&date_preset=today&level=account`,
+        'meta_today'
+      );
+      const roas = calcROASIndex(r.data);
+      const roasEl = document.getElementById('strip-roas');
+      if (roasEl && roas !== null) roasEl.textContent = roas.toFixed(1) + '×';
+      if (r.fromCache) setStaleBadgeIndex('strip-roas', getCacheAgeMins('meta_today'));
+      else setLiveBadgeIndex('strip-roas');
+    } catch (e) {
+      console.warn('Index Meta failed:', e);
+      const stale = getStaleData('meta_today');
+      if (stale) {
+        const roas = calcROASIndex(stale);
+        const roasEl = document.getElementById('strip-roas');
+        if (roasEl && roas !== null) roasEl.textContent = roas.toFixed(1) + '×';
+        setStaleBadgeIndex('strip-roas', getCacheAgeMins('meta_today'));
+      }
+    }
+  }
+
+  // ── BOOT ──────────────────────────────────────────────
+  function refreshIndexData() {
+    Promise.all([loadIndexRevenue(), loadIndexROAS()]).catch(e => console.warn(e));
+  }
+
+  refreshIndexData();
+  setInterval(refreshIndexData, 300000); // auto-refresh every 5 minutes
+</script>
 </body>
 </html>

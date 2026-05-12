@@ -441,6 +441,12 @@
 
   input[type="checkbox"] { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
 
+  /* ── LIVE DATA BADGES & SKELETONS ── */
+  .live-badge { display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#059669;background:#ECFDF5;border:1px solid #A7F3D0;border-radius:20px;padding:2px 8px;margin-left:8px;vertical-align:middle;letter-spacing:0.02em; }
+  .stale-badge { display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:var(--text3);background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:2px 8px;margin-left:8px;vertical-align:middle; }
+  @keyframes skeleton-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  .skeleton { background:linear-gradient(90deg,#e5e7eb 25%,#f3f4f6 50%,#e5e7eb 75%);background-size:200% 100%;animation:skeleton-shimmer 1.5s infinite;border-radius:4px;color:transparent!important;min-width:60px;display:inline-block; }
+
   /* ── ASK CLAUDE FLOATING BUTTON ── */
   .claude-fab {
     position: fixed;
@@ -646,7 +652,7 @@
         </div>
       </div>
       <div class="topbar-right">
-        <button class="btn btn-ghost btn-sm">⟳ Refresh</button>
+        <button class="btn btn-ghost btn-sm" id="refresh-all-btn" onclick="refreshAllData()">↻ Refresh</button>
         <button class="btn btn-secondary btn-sm">↓ Export</button>
         <button class="btn btn-primary btn-sm" onclick="window.location='ambassador-cms.html'">Ambassador CMS →</button>
       </div>
@@ -660,7 +666,7 @@
       <!-- ═══════════════════════════════════════════════════ -->
       <div class="section-block" id="revenue">
         <div class="section-header">
-          <div class="section-title"><span class="section-icon">◈</span> Revenue Tracker</div>
+          <div class="section-title"><span class="section-icon">◈</span> Revenue Tracker <span id="revenue-live-badge"></span></div>
           <div class="chip-tabs">
             <div class="chip active">Daily</div>
             <div class="chip">Weekly</div>
@@ -672,21 +678,21 @@
           <div class="big-progress">
             <div class="big-progress-top">
               <div>
-                <div class="big-progress-amount">$6,842</div>
+                <div class="big-progress-amount" id="rev-monthly-amount">$6,842</div>
                 <div class="big-progress-goal">of $10,000 monthly goal</div>
               </div>
               <span class="pace-badge pace-ahead">↑ 12% ahead of pace</span>
             </div>
             <div class="big-progress-bar">
-              <div class="big-progress-fill" style="width:68.4%"></div>
+              <div class="big-progress-fill" id="rev-monthly-bar" style="width:68.4%"></div>
             </div>
             <div class="big-progress-meta">
               <div class="big-progress-stat">
-                <div class="big-progress-stat-val">$341</div>
+                <div class="big-progress-stat-val" id="rev-stat-today">$341</div>
                 <div class="big-progress-stat-lbl">Today</div>
               </div>
               <div class="big-progress-stat">
-                <div class="big-progress-stat-val">$2,184</div>
+                <div class="big-progress-stat-val" id="rev-stat-week">$2,184</div>
                 <div class="big-progress-stat-lbl">This Week</div>
               </div>
               <div class="big-progress-stat">
@@ -729,24 +735,24 @@
 
         <div class="stats-grid stats-grid-4">
           <div class="stat-card accent">
-            <div class="stat-value">$341</div>
+            <div class="stat-value" id="rev-card-today">$341</div>
             <div class="stat-label">Revenue Today</div>
-            <div class="stat-delta up">↑ 7% vs yesterday</div>
+            <div class="stat-delta up" id="rev-card-today-delta">↑ 7% vs yesterday</div>
           </div>
           <div class="stat-card green">
-            <div class="stat-value green">$2,184</div>
+            <div class="stat-value green" id="rev-card-week">$2,184</div>
             <div class="stat-label">This Week</div>
             <div class="stat-delta up">↑ 18% vs last week</div>
           </div>
           <div class="stat-card accent">
-            <div class="stat-value">$6,842</div>
+            <div class="stat-value" id="rev-card-month">$6,842</div>
             <div class="stat-label">Month to Date</div>
             <div class="stat-delta up">↑ 23% vs last month</div>
           </div>
           <div class="stat-card green">
-            <div class="stat-value green">68%</div>
+            <div class="stat-value green" id="rev-card-orders">68%</div>
             <div class="stat-label">Goal Progress</div>
-            <div class="stat-delta up">↑ Ahead of pace</div>
+            <div class="stat-delta up" id="rev-card-orders-delta">↑ Ahead of pace</div>
           </div>
         </div>
       </div>
@@ -890,7 +896,7 @@
       <!-- ═══════════════════════════════════════════════════ -->
       <div class="section-block" id="meta">
         <div class="section-header">
-          <div class="section-title"><span class="section-icon">▲</span> Meta Ads</div>
+          <div class="section-title"><span class="section-icon">▲</span> Meta Ads <span id="meta-live-badge"></span></div>
           <div style="display:flex;gap:8px;align-items:center">
             <span class="badge badge-red">1 Ad Below 2.0x ROAS</span>
             <button class="btn btn-ghost btn-sm">View in Ads Manager</button>
@@ -899,22 +905,22 @@
 
         <div class="stats-grid stats-grid-4" style="margin-bottom:14px">
           <div class="stat-card accent">
-            <div class="stat-value">3.4x</div>
-            <div class="stat-label">Avg ROAS</div>
-            <div class="stat-delta up">↑ 0.3x vs last week</div>
+            <div class="stat-value" id="meta-stat-roas">3.4x</div>
+            <div class="stat-label">Avg ROAS (Today)</div>
+            <div class="stat-delta up" id="meta-stat-roas-delta">↑ 0.3x vs last week</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value" style="font-size:22px">$1,240</div>
+            <div class="stat-value" id="meta-stat-spend" style="font-size:22px">$1,240</div>
             <div class="stat-label">Total Ad Spend</div>
             <div class="stat-delta">Last 7 days</div>
           </div>
           <div class="stat-card green">
-            <div class="stat-value green" style="font-size:22px">$4,216</div>
+            <div class="stat-value green" id="meta-stat-revenue" style="font-size:22px">$4,216</div>
             <div class="stat-label">Ad Revenue</div>
             <div class="stat-delta up">↑ 18% vs last week</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value" style="font-size:22px">2.4%</div>
+            <div class="stat-value" id="meta-stat-ctr" style="font-size:22px">2.4%</div>
             <div class="stat-label">Avg CTR</div>
             <div class="stat-delta up">↑ 0.2% vs last week</div>
           </div>
@@ -1011,7 +1017,7 @@
       <!-- ═══════════════════════════════════════════════════ -->
       <div class="section-block" id="klaviyo">
         <div class="section-header">
-          <div class="section-title"><span class="section-icon">✉</span> Klaviyo — Email & SMS</div>
+          <div class="section-title"><span class="section-icon">✉</span> Klaviyo — Email & SMS <span id="klaviyo-live-badge"></span></div>
           <button class="btn btn-ghost btn-sm">Open Klaviyo →</button>
         </div>
 
@@ -1032,7 +1038,7 @@
             <div class="stat-delta">Industry avg: 22%</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value" style="font-size:22px">4,218</div>
+            <div class="stat-value" id="klaviyo-stat-subscribers" style="font-size:22px">4,218</div>
             <div class="stat-label">Active Subscribers</div>
             <div class="stat-delta up">+142 this month</div>
           </div>
@@ -1139,28 +1145,28 @@
       <!-- ═══════════════════════════════════════════════════ -->
       <div class="section-block" id="shopify">
         <div class="section-header">
-          <div class="section-title"><span class="section-icon">⊡</span> Shopify</div>
+          <div class="section-title"><span class="section-icon">⊡</span> Shopify <span id="shopify-live-badge"></span></div>
           <button class="btn btn-ghost btn-sm">Open Shopify →</button>
         </div>
 
         <div class="stats-grid stats-grid-4" style="margin-bottom:14px">
           <div class="stat-card accent">
-            <div class="stat-value">$341</div>
+            <div class="stat-value" id="shopify-stat-daily">$341</div>
             <div class="stat-label">Daily Sales</div>
-            <div class="stat-delta up">↑ 7% vs yesterday</div>
+            <div class="stat-delta up" id="shopify-stat-daily-delta">↑ 7% vs yesterday</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value" style="font-size:22px">2.4%</div>
-            <div class="stat-label">Store CTR</div>
-            <div class="stat-delta up">↑ 0.3% vs avg</div>
+            <div class="stat-value" id="shopify-stat-orders" style="font-size:22px">—</div>
+            <div class="stat-label">Orders Today</div>
+            <div class="stat-delta up">↑ vs yesterday</div>
           </div>
           <div class="stat-card green">
-            <div class="stat-value green" style="font-size:22px">3.8%</div>
-            <div class="stat-label">Conversion Rate</div>
-            <div class="stat-delta up">↑ 0.6% vs avg</div>
+            <div class="stat-value green" id="shopify-stat-monthly" style="font-size:22px">—</div>
+            <div class="stat-label">Monthly Revenue</div>
+            <div class="stat-delta up">30-day total</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value" style="font-size:22px">$48</div>
+            <div class="stat-value" id="shopify-stat-aov" style="font-size:22px">$48</div>
             <div class="stat-label">Avg Order Value</div>
             <div class="stat-delta up">↑ $4 vs last month</div>
           </div>
@@ -1224,7 +1230,7 @@
               <div class="divider"></div>
               <div class="metric-row">
                 <div><div class="metric-name bold">Orders Today</div></div>
-                <div><div class="metric-val" style="font-size:18px">54</div><div class="metric-delta up">+7 vs yesterday</div></div>
+                <div><div class="metric-val" id="shopify-orders-today" style="font-size:18px">54</div><div class="metric-delta up" id="shopify-orders-delta">+7 vs yesterday</div></div>
               </div>
             </div>
           </div>
@@ -1997,6 +2003,7 @@
   function askSuggestion(btn) {
     document.getElementById('claude-input').value = btn.textContent;
     sendClaude();
+
   }
 
   function toggleClaude() {
@@ -2012,6 +2019,359 @@
       fab.title = 'Ask Claude';
     }
   }
+</script>
+
+<!-- ── LIVE API INTEGRATION ─────────────────────────────── -->
+<script>
+  // ── API CONSTANTS ──────────────────────────────────────
+  const SHOPIFY_TOKEN = 'PLACEHOLDER_SHOPIFY_TOKEN';
+  const SHOPIFY_STORE = 'obsidianscaled.myshopify.com';
+  const META_TOKEN = 'PLACEHOLDER_META_TOKEN';
+  const META_AD_ACCOUNT = 'PLACEHOLDER_AD_ACCOUNT_ID';
+  const KLAVIYO_KEY = 'PLACEHOLDER_KLAVIYO_KEY';
+
+  const CACHE_TTL = 300000; // 5 minutes
+
+  // ── CACHE HELPERS ──────────────────────────────────────
+  function getCached(key) {
+    try {
+      const item = localStorage.getItem('obsidian_' + key);
+      if (!item) return null;
+      const parsed = JSON.parse(item);
+      if (Date.now() - parsed.ts < CACHE_TTL) return parsed.data;
+      return null;
+    } catch (e) { return null; }
+  }
+
+  function setCached(key, data) {
+    try { localStorage.setItem('obsidian_' + key, JSON.stringify({ ts: Date.now(), data })); } catch (e) {}
+  }
+
+  function getCacheAgeMins(key) {
+    try {
+      const item = localStorage.getItem('obsidian_' + key);
+      if (!item) return null;
+      return Math.floor((Date.now() - JSON.parse(item).ts) / 60000);
+    } catch (e) { return null; }
+  }
+
+  function getStaleData(key) {
+    try {
+      const item = localStorage.getItem('obsidian_' + key);
+      return item ? JSON.parse(item).data : null;
+    } catch (e) { return null; }
+  }
+
+  // ── DATE HELPERS ───────────────────────────────────────
+  function isoDate(daysAgo) {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - daysAgo);
+    return d.toISOString().replace('.000Z', '-00:00');
+  }
+
+  // ── DOM HELPERS ────────────────────────────────────────
+  function el(id) { return document.getElementById(id); }
+
+  function setVal(id, val) {
+    const e = el(id);
+    if (e) { e.textContent = val; e.classList.remove('skeleton'); }
+  }
+
+  function setSkeleton(id) {
+    const e = el(id);
+    if (e) { e.innerHTML = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'; e.classList.add('skeleton'); }
+  }
+
+  function setLiveBadge(id) {
+    const e = el(id);
+    if (e) { e.className = 'live-badge'; e.textContent = '● LIVE'; }
+  }
+
+  function setStaleBadge(id, mins) {
+    const e = el(id);
+    if (e) { e.className = 'stale-badge'; e.textContent = mins !== null ? `↻ ${mins}m ago` : '↻ Cached'; }
+  }
+
+  function fmtMoney(n) {
+    return '$' + Math.round(n).toLocaleString('en-US');
+  }
+
+  function fmtPct(n) {
+    return n.toFixed(2) + '%';
+  }
+
+  // ── SHOPIFY FETCHERS ───────────────────────────────────
+  async function fetchShopify(path, cacheKey) {
+    const cached = getCached(cacheKey);
+    if (cached) return { data: cached, fromCache: true };
+    const url = `https://${SHOPIFY_STORE}/admin/api/2024-01${path}`;
+    const res = await fetch(url, {
+      headers: { 'X-Shopify-Access-Token': SHOPIFY_TOKEN, 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) throw new Error('Shopify ' + res.status);
+    const data = await res.json();
+    setCached(cacheKey, data);
+    return { data, fromCache: false };
+  }
+
+  // ── META FETCHERS ──────────────────────────────────────
+  async function fetchMeta(endpoint, cacheKey) {
+    const cached = getCached(cacheKey);
+    if (cached) return { data: cached, fromCache: true };
+    const url = `https://graph.facebook.com/v19.0/${endpoint}&access_token=${META_TOKEN}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Meta ' + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error('Meta: ' + data.error.message);
+    setCached(cacheKey, data);
+    return { data, fromCache: false };
+  }
+
+  // ── KLAVIYO FETCHERS ───────────────────────────────────
+  async function fetchKlaviyo(path, cacheKey) {
+    const cached = getCached(cacheKey);
+    if (cached) return { data: cached, fromCache: true };
+    const res = await fetch('https://a.klaviyo.com/api' + path, {
+      headers: {
+        'Authorization': 'Klaviyo-API-Key ' + KLAVIYO_KEY,
+        'revision': '2024-02-15',
+        'Accept': 'application/json'
+      }
+    });
+    if (!res.ok) throw new Error('Klaviyo ' + res.status);
+    const data = await res.json();
+    setCached(cacheKey, data);
+    return { data, fromCache: false };
+  }
+
+  // ── CALCULATE HELPERS ──────────────────────────────────
+  function calcRevenue(orders) {
+    return orders.reduce((s, o) => s + parseFloat(o.total_price || 0), 0);
+  }
+
+  function calcROAS(insightData) {
+    if (!insightData) return null;
+    const d = Array.isArray(insightData.data) ? insightData.data[0] : null;
+    if (!d) return null;
+    const spend = parseFloat(d.spend || 0);
+    if (!spend) return null;
+    const revenue = (d.action_values || []).reduce((s, a) => {
+      return a.action_type === 'purchase' ? s + parseFloat(a.value || 0) : s;
+    }, 0);
+    return revenue / spend;
+  }
+
+  function calcSpend(insightData) {
+    if (!insightData || !Array.isArray(insightData.data)) return null;
+    return insightData.data.reduce((s, d) => s + parseFloat(d.spend || 0), 0);
+  }
+
+  function calcMetaRevenue(insightData) {
+    if (!insightData || !Array.isArray(insightData.data)) return null;
+    return insightData.data.reduce((s, d) => {
+      return s + (d.action_values || []).reduce((sv, a) => {
+        return a.action_type === 'purchase' ? sv + parseFloat(a.value || 0) : sv;
+      }, 0);
+    }, 0);
+  }
+
+  // ── UPDATE REVENUE SECTION ─────────────────────────────
+  function updateRevenue(today, week7d, month30d, fromCache, cacheKey) {
+    const todayOrders = today.orders || [];
+    const weekOrders = week7d.orders || [];
+    const monthOrders = month30d.orders || [];
+
+    const todayRev = calcRevenue(todayOrders);
+    const weekRev = calcRevenue(weekOrders);
+    const monthRev = calcRevenue(monthOrders);
+    const todayCount = todayOrders.length;
+    const todayAOV = todayCount > 0 ? todayRev / todayCount : 0;
+    const goalMTD = 10000;
+    const goalPct = Math.min(100, (monthRev / goalMTD * 100)).toFixed(1);
+
+    setVal('rev-monthly-amount', fmtMoney(monthRev));
+    const barEl = el('rev-monthly-bar');
+    if (barEl) barEl.style.width = goalPct + '%';
+    setVal('rev-stat-today', fmtMoney(todayRev));
+    setVal('rev-stat-week', fmtMoney(weekRev));
+    setVal('rev-card-today', fmtMoney(todayRev));
+    setVal('rev-card-week', fmtMoney(weekRev));
+    setVal('rev-card-month', fmtMoney(monthRev));
+    setVal('rev-card-orders', todayCount + ' orders');
+    setVal('rev-card-orders-delta', 'AOV ' + fmtMoney(todayAOV));
+    setVal('rev-card-today-delta', 'AOV ' + fmtMoney(todayAOV));
+
+    if (fromCache) {
+      setStaleBadge('revenue-live-badge', getCacheAgeMins(cacheKey));
+    } else {
+      setLiveBadge('revenue-live-badge');
+    }
+  }
+
+  // ── UPDATE SHOPIFY SECTION ─────────────────────────────
+  function updateShopify(today, month30d, fromCache, cacheKey) {
+    const todayOrders = today.orders || [];
+    const monthOrders = month30d.orders || [];
+    const todayRev = calcRevenue(todayOrders);
+    const monthRev = calcRevenue(monthOrders);
+    const todayCount = todayOrders.length;
+    const todayAOV = todayCount > 0 ? todayRev / todayCount : 0;
+
+    setVal('shopify-stat-daily', fmtMoney(todayRev));
+    setVal('shopify-stat-orders', todayCount);
+    setVal('shopify-stat-monthly', fmtMoney(monthRev));
+    setVal('shopify-stat-aov', fmtMoney(todayAOV));
+    setVal('shopify-orders-today', todayCount);
+    setVal('shopify-orders-delta', todayCount + ' orders today');
+    setVal('shopify-stat-daily-delta', 'AOV ' + fmtMoney(todayAOV));
+
+    if (fromCache) {
+      setStaleBadge('shopify-live-badge', getCacheAgeMins(cacheKey));
+    } else {
+      setLiveBadge('shopify-live-badge');
+    }
+  }
+
+  // ── UPDATE META SECTION ────────────────────────────────
+  function updateMeta(todayInsights, week7dInsights, fromCache, cacheKey) {
+    const roas = calcROAS(todayInsights);
+    const spend7d = calcSpend(week7dInsights);
+    const rev7d = calcMetaRevenue(week7dInsights);
+    const todayD = todayInsights && todayInsights.data && todayInsights.data[0];
+    const ctr = todayD ? parseFloat(todayD.ctr || 0) : null;
+
+    if (roas !== null) setVal('meta-stat-roas', roas.toFixed(1) + '×');
+    if (spend7d !== null) setVal('meta-stat-spend', fmtMoney(spend7d));
+    if (rev7d !== null) setVal('meta-stat-revenue', fmtMoney(rev7d));
+    if (ctr !== null) setVal('meta-stat-ctr', fmtPct(ctr));
+
+    if (fromCache) {
+      setStaleBadge('meta-live-badge', getCacheAgeMins(cacheKey));
+    } else {
+      setLiveBadge('meta-live-badge');
+    }
+  }
+
+  // ── UPDATE KLAVIYO SECTION ─────────────────────────────
+  function updateKlaviyo(profiles, fromCache, cacheKey) {
+    const total = profiles && profiles.links && profiles.links.next !== undefined
+      ? (profiles.data ? profiles.data.length : 0)
+      : (profiles && profiles.data ? (profiles.data[0] ? parseInt(profiles.data[0].id || 0) : 0) : 0);
+
+    // Klaviyo profiles page[size]=1 returns total count in meta
+    const count = profiles && profiles.meta && profiles.meta.total !== undefined
+      ? profiles.meta.total
+      : (profiles && profiles.data ? profiles.data.length : null);
+
+    if (count !== null) {
+      setVal('klaviyo-stat-subscribers', count.toLocaleString('en-US'));
+    }
+
+    if (fromCache) {
+      setStaleBadge('klaviyo-live-badge', getCacheAgeMins(cacheKey));
+    } else {
+      setLiveBadge('klaviyo-live-badge');
+    }
+  }
+
+  // ── SHOW SKELETONS ─────────────────────────────────────
+  function showSkeletons() {
+    ['rev-monthly-amount','rev-stat-today','rev-stat-week','rev-card-today','rev-card-week','rev-card-month',
+     'meta-stat-roas','meta-stat-spend','meta-stat-revenue','meta-stat-ctr',
+     'klaviyo-stat-subscribers',
+     'shopify-stat-daily','shopify-stat-orders','shopify-stat-monthly','shopify-stat-aov','shopify-orders-today'
+    ].forEach(setSkeleton);
+  }
+
+  // ── MAIN REFRESH ───────────────────────────────────────
+  async function refreshAllData() {
+    const btn = el('refresh-all-btn');
+    if (btn) { btn.textContent = '↻ Loading…'; btn.disabled = true; }
+
+    // Only show skeletons if no cache exists at all
+    const hasSomeCache = getCached('shopify_today') || getCached('meta_today');
+    if (!hasSomeCache) showSkeletons();
+
+    try {
+      await Promise.all([
+        loadShopifyData(),
+        loadMetaData(),
+        loadKlaviyoData()
+      ]);
+    } catch (e) {
+      console.warn('refreshAllData error:', e);
+    }
+
+    if (btn) { btn.textContent = '↻ Refresh'; btn.disabled = false; }
+  }
+
+  // ── LOAD SHOPIFY ───────────────────────────────────────
+  async function loadShopifyData() {
+    try {
+      const [r1, r2, r3] = await Promise.all([
+        fetchShopify(`/orders.json?status=any&limit=250&created_at_min=${isoDate(0)}`, 'shopify_today'),
+        fetchShopify(`/orders.json?status=any&limit=250&created_at_min=${isoDate(7)}`, 'shopify_7d'),
+        fetchShopify(`/orders.json?status=any&limit=250&created_at_min=${isoDate(30)}`, 'shopify_30d')
+      ]);
+      const fromCache = r1.fromCache && r2.fromCache && r3.fromCache;
+      updateRevenue(r1.data, r2.data, r3.data, fromCache, 'shopify_today');
+      updateShopify(r1.data, r3.data, fromCache, 'shopify_today');
+    } catch (e) {
+      console.warn('Shopify fetch failed:', e);
+      const stale = getStaleData('shopify_today');
+      const stale30 = getStaleData('shopify_30d');
+      const stale7 = getStaleData('shopify_7d');
+      if (stale) {
+        updateRevenue(stale, stale7 || {orders:[]}, stale30 || {orders:[]}, true, 'shopify_today');
+        updateShopify(stale, stale30 || {orders:[]}, true, 'shopify_today');
+      } else {
+        setStaleBadge('revenue-live-badge', null);
+        setStaleBadge('shopify-live-badge', null);
+      }
+    }
+  }
+
+  // ── LOAD META ──────────────────────────────────────────
+  async function loadMetaData() {
+    try {
+      const [r1, r2] = await Promise.all([
+        fetchMeta(`act_${META_AD_ACCOUNT}/insights?fields=spend,impressions,clicks,cpc,ctr,actions,action_values&date_preset=today&level=account`, 'meta_today'),
+        fetchMeta(`act_${META_AD_ACCOUNT}/insights?fields=spend,actions,action_values&date_preset=last_7d&time_increment=1`, 'meta_7d')
+      ]);
+      const fromCache = r1.fromCache && r2.fromCache;
+      updateMeta(r1.data, r2.data, fromCache, 'meta_today');
+    } catch (e) {
+      console.warn('Meta fetch failed:', e);
+      const staleToday = getStaleData('meta_today');
+      const stale7d = getStaleData('meta_7d');
+      if (staleToday) {
+        updateMeta(staleToday, stale7d, true, 'meta_today');
+      } else {
+        setStaleBadge('meta-live-badge', null);
+      }
+    }
+  }
+
+  // ── LOAD KLAVIYO ───────────────────────────────────────
+  async function loadKlaviyoData() {
+    try {
+      const r = await fetchKlaviyo('/profiles/?page[size]=1', 'klaviyo_profiles');
+      updateKlaviyo(r.data, r.fromCache, 'klaviyo_profiles');
+    } catch (e) {
+      console.warn('Klaviyo fetch failed:', e);
+      const stale = getStaleData('klaviyo_profiles');
+      if (stale) {
+        updateKlaviyo(stale, true, 'klaviyo_profiles');
+      } else {
+        setStaleBadge('klaviyo-live-badge', null);
+      }
+    }
+  }
+
+  // ── BOOT ──────────────────────────────────────────────
+  refreshAllData();
+  setInterval(refreshAllData, 300000); // auto-refresh every 5 minutes
 </script>
 </body>
 </html>

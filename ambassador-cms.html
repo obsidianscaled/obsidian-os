@@ -870,6 +870,29 @@
       <!-- DASHBOARD VIEW -->
       <div id="view-dashboard">
         <div class="stats-grid" id="stats-grid"></div>
+
+        <!-- LIVE BUSINESS DATA STRIP -->
+        <div id="live-data-strip" style="display:flex;gap:12px;margin-bottom:20px;padding:14px 18px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius2);box-shadow:var(--shadow);align-items:center;flex-wrap:wrap;">
+          <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-right:4px;">Live</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:12px;color:var(--text2);font-weight:500;">Revenue Today</span>
+            <span id="amb-live-revenue" style="font-size:16px;font-weight:800;color:var(--green);">—</span>
+          </div>
+          <div style="width:1px;height:20px;background:var(--border);"></div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:12px;color:var(--text2);font-weight:500;">Orders Today</span>
+            <span id="amb-live-orders" style="font-size:16px;font-weight:800;color:var(--accent);">—</span>
+          </div>
+          <div style="width:1px;height:20px;background:var(--border);"></div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:12px;color:var(--text2);font-weight:500;">Subscribers</span>
+            <span id="amb-live-subscribers" style="font-size:16px;font-weight:800;color:var(--accent);">—</span>
+          </div>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+            <span id="amb-live-badge" style="font-size:10px;color:var(--text3);">Loading…</span>
+          </div>
+        </div>
+
         <div class="commission-grid">
           <div class="commission-card">
             <div class="commission-rate">5%</div>
@@ -2112,6 +2135,135 @@ function toast(msg, type='success') {
 recountSubmissions();
 updatePendingBadge();
 renderView('dashboard');
+</script>
+
+<!-- ── LIVE API INTEGRATION ─────────────────────────────── -->
+<script>
+  // ── API CONSTANTS ──────────────────────────────────────
+  const SHOPIFY_TOKEN = 'PLACEHOLDER_SHOPIFY_TOKEN';
+  const SHOPIFY_STORE = 'obsidianscaled.myshopify.com';
+  const META_TOKEN = 'PLACEHOLDER_META_TOKEN';
+  const META_AD_ACCOUNT = 'PLACEHOLDER_AD_ACCOUNT_ID';
+  const KLAVIYO_KEY = 'PLACEHOLDER_KLAVIYO_KEY';
+
+  const CACHE_TTL = 300000; // 5 minutes
+
+  function getCachedAMB(key) {
+    try {
+      const item = localStorage.getItem('obsidian_' + key);
+      if (!item) return null;
+      const p = JSON.parse(item);
+      return Date.now() - p.ts < CACHE_TTL ? p.data : null;
+    } catch (e) { return null; }
+  }
+
+  function setCachedAMB(key, data) {
+    try { localStorage.setItem('obsidian_' + key, JSON.stringify({ ts: Date.now(), data })); } catch (e) {}
+  }
+
+  function getCacheAgeMinsAMB(key) {
+    try {
+      const item = localStorage.getItem('obsidian_' + key);
+      return item ? Math.floor((Date.now() - JSON.parse(item).ts) / 60000) : null;
+    } catch (e) { return null; }
+  }
+
+  function getStaleAMB(key) {
+    try { const i = localStorage.getItem('obsidian_' + key); return i ? JSON.parse(i).data : null; } catch (e) { return null; }
+  }
+
+  function isoDateAMB(daysAgo) {
+    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - daysAgo);
+    return d.toISOString().replace('.000Z', '-00:00');
+  }
+
+  function fmtMoneyAMB(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
+
+  function updateLiveStrip(revenue, orders, subscribers, fromCache, cacheKey) {
+    const revEl = document.getElementById('amb-live-revenue');
+    const ordEl = document.getElementById('amb-live-orders');
+    const subEl = document.getElementById('amb-live-subscribers');
+    const badgeEl = document.getElementById('amb-live-badge');
+
+    if (revEl) revEl.textContent = revenue !== null ? fmtMoneyAMB(revenue) : '—';
+    if (ordEl) ordEl.textContent = orders !== null ? orders : '—';
+    if (subEl) subEl.textContent = subscribers !== null ? subscribers.toLocaleString('en-US') : '—';
+
+    if (badgeEl) {
+      if (fromCache) {
+        const mins = getCacheAgeMinsAMB(cacheKey);
+        badgeEl.style.cssText = 'font-size:10px;font-weight:600;color:#9CA3AF;background:#F1F3F7;border:1px solid #D1D5DB;border-radius:20px;padding:2px 8px;';
+        badgeEl.textContent = mins !== null ? `↻ ${mins}m ago` : '↻ Cached';
+      } else {
+        badgeEl.style.cssText = 'font-size:10px;font-weight:700;color:#059669;background:#ECFDF5;border:1px solid #A7F3D0;border-radius:20px;padding:2px 8px;';
+        badgeEl.textContent = '● LIVE';
+      }
+    }
+  }
+
+  async function loadAmbLiveData() {
+    let revenue = null, orders = null, subscribers = null;
+    let fromCache = true;
+
+    try {
+      // Shopify today's orders
+      let shopifyData = getCachedAMB('shopify_today');
+      if (!shopifyData) {
+        const res = await fetch(
+          `https://${SHOPIFY_STORE}/admin/api/2024-01/orders.json?status=any&limit=250&created_at_min=${isoDateAMB(0)}`,
+          { headers: { 'X-Shopify-Access-Token': SHOPIFY_TOKEN } }
+        );
+        if (res.ok) {
+          shopifyData = await res.json();
+          setCachedAMB('shopify_today', shopifyData);
+          fromCache = false;
+        }
+      }
+      if (shopifyData && shopifyData.orders) {
+        orders = shopifyData.orders.length;
+        revenue = shopifyData.orders.reduce((s, o) => s + parseFloat(o.total_price || 0), 0);
+      }
+    } catch (e) {
+      console.warn('AMB Shopify failed:', e);
+      const stale = getStaleAMB('shopify_today');
+      if (stale && stale.orders) {
+        orders = stale.orders.length;
+        revenue = stale.orders.reduce((s, o) => s + parseFloat(o.total_price || 0), 0);
+      }
+    }
+
+    try {
+      // Klaviyo profiles count
+      let klaviyoData = getCachedAMB('klaviyo_profiles');
+      if (!klaviyoData) {
+        const res = await fetch('https://a.klaviyo.com/api/profiles/?page[size]=1', {
+          headers: {
+            'Authorization': 'Klaviyo-API-Key ' + KLAVIYO_KEY,
+            'revision': '2024-02-15',
+            'Accept': 'application/json'
+          }
+        });
+        if (res.ok) {
+          klaviyoData = await res.json();
+          setCachedAMB('klaviyo_profiles', klaviyoData);
+          fromCache = false;
+        }
+      }
+      if (klaviyoData && klaviyoData.meta && klaviyoData.meta.total !== undefined) {
+        subscribers = klaviyoData.meta.total;
+      } else if (klaviyoData && klaviyoData.data) {
+        subscribers = klaviyoData.data.length;
+      }
+    } catch (e) {
+      console.warn('AMB Klaviyo failed:', e);
+    }
+
+    updateLiveStrip(revenue, orders, subscribers, fromCache, 'shopify_today');
+  }
+
+  // ── BOOT ──────────────────────────────────────────────
+  loadAmbLiveData();
+  setInterval(loadAmbLiveData, 300000); // auto-refresh every 5 minutes
 </script>
 </body>
 </html>

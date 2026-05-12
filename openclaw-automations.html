@@ -434,6 +434,12 @@
     .nav-label, .nav-badge { display: none; }
     .automation-desc { display: none; }
   }
+
+  /* ── LIVE DATA BADGES & SKELETONS ── */
+  .live-badge { display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#059669;background:#ECFDF5;border:1px solid #A7F3D0;border-radius:20px;padding:2px 8px;margin-left:8px;vertical-align:middle;letter-spacing:0.02em; }
+  .stale-badge { display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:var(--text3);background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:2px 8px;margin-left:8px;vertical-align:middle; }
+  @keyframes skeleton-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  .skeleton-row { padding:12px 20px;text-align:center;color:var(--text3);font-size:12px;font-style:italic; }
 </style>
 </head>
 <body>
@@ -1029,7 +1035,7 @@
       <!-- ── SECTION 4: KLAVIYO FLOWS ── -->
       <div class="section-block" id="klaviyo-flows">
         <div class="section-header">
-          <div class="section-title"><span class="section-icon">⚡</span> Klaviyo Automation Flows</div>
+          <div class="section-title"><span class="section-icon">⚡</span> Klaviyo Automation Flows <span id="klaviyo-flows-live-badge"></span></div>
           <div style="display:flex;gap:8px;">
             <button class="btn btn-ghost btn-sm">📊 Flow Reports</button>
             <button class="btn btn-secondary btn-sm">+ New Flow</button>
@@ -1045,7 +1051,7 @@
             <span class="badge badge-green">All Active</span>
           </div>
 
-          <div>
+          <div id="klaviyo-flows-list">
             <!-- Welcome email -->
             <div class="flow-row">
               <div class="flow-icon">👋</div>
@@ -1224,7 +1230,8 @@
         <div class="section-header">
           <div class="section-title">
             <span class="section-icon">📦</span> Inventory Reorder Alerts
-            <span class="badge badge-red" style="margin-left:4px;">3 Critical</span>
+            <span class="badge badge-red" style="margin-left:4px;" id="inventory-critical-badge">3 Critical</span>
+            <span id="inventory-live-badge"></span>
           </div>
           <div style="display:flex;gap:8px;">
             <button class="btn btn-ghost btn-sm">📥 Export</button>
@@ -1259,7 +1266,7 @@
                 <th>Action</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="inventory-tbody">
               <tr style="background:#FFF9F9;">
                 <td>
                   <div style="font-weight:700;">Obsidian Pre-Workout 40sv</div>
@@ -1556,6 +1563,229 @@
     });
   }, { threshold: 0.25 });
   sections.forEach(s => observer.observe(s));
+</script>
+
+<!-- ── LIVE API INTEGRATION ─────────────────────────────── -->
+<script>
+  // ── API CONSTANTS ──────────────────────────────────────
+  const SHOPIFY_TOKEN = 'PLACEHOLDER_SHOPIFY_TOKEN';
+  const SHOPIFY_STORE = 'obsidianscaled.myshopify.com';
+  const META_TOKEN = 'PLACEHOLDER_META_TOKEN';
+  const META_AD_ACCOUNT = 'PLACEHOLDER_AD_ACCOUNT_ID';
+  const KLAVIYO_KEY = 'PLACEHOLDER_KLAVIYO_KEY';
+
+  const CACHE_TTL = 300000; // 5 minutes
+
+  function getCachedOC(key) {
+    try {
+      const item = localStorage.getItem('obsidian_' + key);
+      if (!item) return null;
+      const p = JSON.parse(item);
+      return Date.now() - p.ts < CACHE_TTL ? p.data : null;
+    } catch (e) { return null; }
+  }
+
+  function setCachedOC(key, data) {
+    try { localStorage.setItem('obsidian_' + key, JSON.stringify({ ts: Date.now(), data })); } catch (e) {}
+  }
+
+  function getCacheAgeMinsOC(key) {
+    try {
+      const item = localStorage.getItem('obsidian_' + key);
+      return item ? Math.floor((Date.now() - JSON.parse(item).ts) / 60000) : null;
+    } catch (e) { return null; }
+  }
+
+  function getStaleOC(key) {
+    try { const i = localStorage.getItem('obsidian_' + key); return i ? JSON.parse(i).data : null; } catch (e) { return null; }
+  }
+
+  function setLiveBadgeOC(id) {
+    const e = document.getElementById(id);
+    if (e) { e.className = 'live-badge'; e.textContent = '● LIVE'; }
+  }
+
+  function setStaleBadgeOC(id, mins) {
+    const e = document.getElementById(id);
+    if (e) { e.className = 'stale-badge'; e.textContent = mins !== null ? `↻ ${mins}m ago` : '↻ Cached'; }
+  }
+
+  // ── KLAVIYO FLOWS ──────────────────────────────────────
+  async function loadKlaviyoFlows() {
+    try {
+      let fromCache = false;
+      let data = getCachedOC('klaviyo_flows');
+      if (data) {
+        fromCache = true;
+      } else {
+        const res = await fetch(`https://a.klaviyo.com/api/flows/?filter=equals(status,'active')`, {
+          headers: {
+            'Authorization': 'Klaviyo-API-Key ' + KLAVIYO_KEY,
+            'revision': '2024-02-15',
+            'Accept': 'application/json'
+          }
+        });
+        if (!res.ok) throw new Error('Klaviyo flows ' + res.status);
+        data = await res.json();
+        setCachedOC('klaviyo_flows', data);
+      }
+
+      renderKlaviyoFlows(data);
+      if (fromCache) setStaleBadgeOC('klaviyo-flows-live-badge', getCacheAgeMinsOC('klaviyo_flows'));
+      else setLiveBadgeOC('klaviyo-flows-live-badge');
+
+    } catch (e) {
+      console.warn('Klaviyo flows failed:', e);
+      const stale = getStaleOC('klaviyo_flows');
+      if (stale) {
+        renderKlaviyoFlows(stale);
+        setStaleBadgeOC('klaviyo-flows-live-badge', getCacheAgeMinsOC('klaviyo_flows'));
+      } else {
+        setStaleBadgeOC('klaviyo-flows-live-badge', null);
+      }
+    }
+  }
+
+  function renderKlaviyoFlows(data) {
+    const flows = data && data.data ? data.data : [];
+    if (!flows.length) return; // keep static content if empty
+    const container = document.getElementById('klaviyo-flows-list');
+    if (!container) return;
+
+    const flowIcons = ['⚡','👋','🎉','💳','🚀','🏆','📧','🔄','💌','📦'];
+    let html = '';
+    flows.slice(0, 8).forEach((flow, i) => {
+      const attrs = flow.attributes || {};
+      const name = attrs.name || 'Unnamed Flow';
+      const status = attrs.status || 'unknown';
+      const trigger = attrs.trigger_type ? attrs.trigger_type.replace(/_/g,' ') : 'Metric trigger';
+      const updated = attrs.updated ? new Date(attrs.updated).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—';
+      const icon = flowIcons[i % flowIcons.length];
+      const badgeClass = status === 'live' || status === 'active' ? 'badge-green' : 'badge-orange';
+      const badgeText = status === 'live' ? 'Active' : status.charAt(0).toUpperCase() + status.slice(1);
+      html += `
+        <div class="flow-row">
+          <div class="flow-icon">${icon}</div>
+          <div class="flow-info">
+            <div class="flow-name">${name}</div>
+            <div class="flow-trigger">Trigger: ${trigger}</div>
+          </div>
+          <div class="flow-stats">
+            <div class="flow-stat">
+              <div class="flow-stat-val">${updated}</div>
+              <div class="flow-stat-lbl">Last Updated</div>
+            </div>
+            <div class="flow-stat">
+              <div class="flow-stat-val">—</div>
+              <div class="flow-stat-lbl">Open Rate</div>
+            </div>
+            <div class="flow-stat">
+              <div class="flow-stat-val">—</div>
+              <div class="flow-stat-lbl">Rev Attributed</div>
+            </div>
+            <span class="badge ${badgeClass}">${badgeText}</span>
+          </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+
+    // Update count badge
+    const countEl = container.closest('.table-wrap') && container.closest('.table-wrap').querySelector('.table-count');
+    if (countEl) countEl.textContent = flows.length + ' active flows from Klaviyo';
+  }
+
+  // ── SHOPIFY INVENTORY ──────────────────────────────────
+  async function loadShopifyInventory() {
+    try {
+      let fromCache = false;
+      let data = getCachedOC('shopify_products');
+      if (data) {
+        fromCache = true;
+      } else {
+        const res = await fetch(`https://${SHOPIFY_STORE}/admin/api/2024-01/products.json?limit=250`, {
+          headers: { 'X-Shopify-Access-Token': SHOPIFY_TOKEN }
+        });
+        if (!res.ok) throw new Error('Shopify products ' + res.status);
+        data = await res.json();
+        setCachedOC('shopify_products', data);
+      }
+
+      renderInventory(data);
+      if (fromCache) setStaleBadgeOC('inventory-live-badge', getCacheAgeMinsOC('shopify_products'));
+      else setLiveBadgeOC('inventory-live-badge');
+
+    } catch (e) {
+      console.warn('Shopify products failed:', e);
+      const stale = getStaleOC('shopify_products');
+      if (stale) {
+        renderInventory(stale);
+        setStaleBadgeOC('inventory-live-badge', getCacheAgeMinsOC('shopify_products'));
+      } else {
+        setStaleBadgeOC('inventory-live-badge', null);
+      }
+    }
+  }
+
+  function renderInventory(data) {
+    const products = data && data.products ? data.products : [];
+    if (!products.length) return;
+    const tbody = document.getElementById('inventory-tbody');
+    if (!tbody) return;
+
+    // Flatten all variants, sum inventory per product
+    const rows = products.map(p => {
+      const totalQty = (p.variants || []).reduce((s, v) => s + (parseInt(v.inventory_quantity) || 0), 0);
+      const price = parseFloat((p.variants && p.variants[0] && p.variants[0].price) || 0);
+      return { name: p.title, sku: (p.variants && p.variants[0] && p.variants[0].sku) || '—', qty: totalQty, price };
+    }).sort((a, b) => a.qty - b.qty); // sort by lowest stock first
+
+    let criticalCount = 0;
+    let html = '';
+    rows.forEach(r => {
+      const isCritical = r.qty < 50;
+      const isWarn = r.qty >= 50 && r.qty < 150;
+      if (isCritical) criticalCount++;
+
+      const rowBg = isCritical ? 'background:#FFF9F9;' : isWarn ? 'background:#FFFBF0;' : '';
+      const statusBadge = isCritical
+        ? '<span class="badge badge-red">🔴 Critical</span>'
+        : isWarn
+        ? '<span class="badge badge-orange">⚠ Order Soon</span>'
+        : '<span class="badge badge-green">Healthy</span>';
+      const daysRemaining = r.qty > 0 ? Math.round(r.qty / Math.max(1, r.qty / 60)) : 0;
+      const pillClass = isCritical ? 'days-pill days-red' : isWarn ? 'days-pill days-amber' : 'days-pill days-green';
+      const btnClass = isCritical ? 'reorder-btn urgent' : 'reorder-btn';
+      const btnText = isCritical ? '⚡ Order Now' : isWarn ? 'Schedule Order' : 'View';
+
+      html += `
+        <tr style="${rowBg}">
+          <td>
+            <div style="font-weight:700;">${r.name}</div>
+            <div style="font-size:11px;color:var(--text3);">SKU: ${r.sku}</div>
+          </td>
+          <td><strong>${r.qty}</strong> units</td>
+          <td>—</td>
+          <td><span class="${pillClass}">${r.qty} units</span></td>
+          <td>${statusBadge}</td>
+          <td style="font-weight:${isCritical?'700':'600'};color:${isCritical?'var(--red)':isWarn?'var(--orange)':'var(--text3)'};">—</td>
+          <td style="font-weight:${isCritical?'700':'600'};">$${(r.price * Math.max(100, r.qty)).toLocaleString('en-US',{maximumFractionDigits:0})}</td>
+          <td><button class="${btnClass}">${btnText}</button></td>
+        </tr>`;
+    });
+    tbody.innerHTML = html;
+
+    // Update critical badge
+    const critEl = document.getElementById('inventory-critical-badge');
+    if (critEl) critEl.textContent = criticalCount + ' Critical';
+  }
+
+  // ── BOOT ──────────────────────────────────────────────
+  function refreshOCData() {
+    Promise.all([loadKlaviyoFlows(), loadShopifyInventory()]).catch(e => console.warn(e));
+  }
+
+  refreshOCData();
+  setInterval(refreshOCData, 300000); // auto-refresh every 5 minutes
 </script>
 
 </body>

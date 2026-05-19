@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Obsidian — Manager Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Base */
+  --bg:#FFFFFF; --bg2:#F8F9FC; --bg3:#F1F3F7; --bg4:#E9ECF2;
+  --border:#E5E7EB; --border2:#D1D5DB;
+  --text:#0A0A0A; --text2:#6B7280; --text3:#9CA3AF;
+  /* Brand */
+  --navy:#1E3A5F; --navy2:#2E5F9E;
+  --navy-dim:rgba(30,58,95,0.06); --navy-dim2:rgba(30,58,95,0.12);
+  /* Status — muted, no vibrant colors */
+  --warn-bg:#FAFAFA; --warn-border:#D1D5DB; --warn-text:#374151;
+  --alert-bg:#F3F4F6; --alert-border:#D1D5DB;
+  /* Minimal accent uses only navy tints */
+  --r:8px; --r2:12px;
+  --sh:0 1px 3px rgba(0,0,0,0.07),0 1px 2px rgba(0,0,0,0.04);
+  --sh2:0 4px 16px rgba(0,0,0,0.09);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg2);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* LAYOUT */
+.app{display:flex;height:100vh;overflow:hidden;}
+.sidebar{width:214px;min-width:214px;background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+
+/* SIDEBAR */
+.brand{padding:20px 20px 14px;border-bottom:1px solid var(--border);}
+.brand-name{font-size:16px;font-weight:800;letter-spacing:0.06em;color:var(--navy);text-transform:uppercase;}
+.brand-sub{font-size:11px;color:var(--text3);margin-top:2px;font-weight:500;}
+.mgr-pill{margin:12px 12px 0;background:var(--navy-dim);border:1px solid rgba(30,58,95,0.14);border-radius:var(--r);padding:10px 12px;}
+.mgr-name{font-size:13px;font-weight:700;color:var(--navy);}
+.mgr-role{font-size:11px;color:var(--text3);}
+.mgr-live{display:flex;align-items:center;gap:5px;margin-top:5px;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#374151;}
+.live-txt{font-size:11px;color:var(--text2);font-weight:600;}
+
+/* COLLAPSIBLE NAV */
+.nav{padding:12px 8px;flex:1;}
+.nav-group{margin-bottom:3px;}
+.ngt{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;cursor:pointer;user-select:none;border-radius:var(--r);}
+.ngt:hover{background:var(--bg2);}
+.ngl{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);}
+.nga{font-size:10px;color:var(--text3);transition:transform 0.2s;}
+.nav-group.collapsed .nga{transform:rotate(-90deg);}
+.ngi{overflow:hidden;transition:max-height 0.25s ease;}
+.nav-group.collapsed .ngi{max-height:0!important;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:13px;font-weight:500;transition:all 0.12s;border:none;background:none;width:100%;text-align:left;position:relative;text-decoration:none;}
+.nav-item:hover{background:var(--bg2);color:var(--text);}
+.nav-item.active{background:var(--navy-dim);color:var(--navy);font-weight:600;}
+.nav-item.active::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:3px;background:var(--navy);border-radius:0 2px 2px 0;}
+.nico{width:16px;text-align:center;font-size:13px;flex-shrink:0;opacity:0.6;}
+.nav-item.active .nico{opacity:1;}
+.nbadge{margin-left:auto;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);}
+.nbadge.alert{background:var(--navy-dim);color:var(--navy);border-color:rgba(30,58,95,0.2);}
+.sf{padding:12px 20px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);}
+
+/* TOPBAR */
+.topbar{background:var(--bg);border-bottom:1px solid var(--border);padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.tt{font-size:15px;font-weight:700;color:var(--text);}
+.ts{font-size:11px;color:var(--text3);}
+.tr{display:flex;align-items:center;gap:8px;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 15px;border-radius:var(--r);border:none;cursor:pointer;font-size:12px;font-weight:600;transition:all 0.12s;white-space:nowrap;font-family:inherit;}
+.btn-p{background:var(--navy);color:#fff;}.btn-p:hover{background:var(--navy2);}
+.btn-g{background:transparent;color:var(--text2);border:1px solid var(--border);}.btn-g:hover{background:var(--bg2);color:var(--text);}
+.btn-sm{padding:5px 11px;font-size:11px;}
+.btn-xs{padding:3px 8px;font-size:11px;}
+
+/* PAGE */
+.page{padding:24px 28px;flex:1;}
+.sb{margin-bottom:26px;scroll-margin-top:16px;}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.stitle{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:7px;}
+
+/* CARDS */
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);box-shadow:var(--sh);overflow:hidden;}
+.ch{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--border);}
+.ct{font-size:13px;font-weight:700;color:var(--text);}
+.cb{padding:18px;}
+.cf{padding:10px 18px;border-top:1px solid var(--border);background:var(--bg2);}
+
+/* BADGES — navy/gray only */
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.b-navy{background:var(--navy-dim);color:var(--navy);border:1px solid rgba(30,58,95,0.2);}
+.b-gray{background:var(--bg3);color:var(--text2);border:1px solid var(--border2);}
+.b-dark{background:var(--bg4);color:var(--text);border:1px solid var(--border2);font-weight:700;}
+.b-flag{background:var(--navy-dim2);color:var(--navy);border:1px solid rgba(30,58,95,0.25);font-weight:700;}
+
+/* STATUS DOTS — used instead of colored badges */
+.sdot{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;}
+.sdot::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.sdot-on::before{background:var(--navy);}
+.sdot-warn::before{background:#374151;}
+.sdot-off::before{background:var(--border2);}
+
+/* TIER BADGES — navy spectrum */
+.tier{display:inline-flex;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+.t-m{background:var(--bg3);color:var(--text3);border:1px solid var(--border2);}
+.t-b{background:var(--bg4);color:var(--text2);border:1px solid var(--border2);}
+.t-s{background:var(--navy-dim);color:var(--navy2);border:1px solid rgba(30,58,95,0.15);}
+.t-g{background:var(--navy-dim2);color:var(--navy);border:1px solid rgba(30,58,95,0.2);}
+.t-e{background:var(--navy);color:#fff;border:1px solid var(--navy);font-weight:800;}
+
+/* PROGRESS BARS — navy only */
+.pw{margin-bottom:12px;}.pw:last-child{margin-bottom:0;}
+.pl{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.pn{font-size:12px;font-weight:600;color:var(--text);}
+.pv{font-size:12px;font-weight:700;color:var(--navy);}
+.pb{height:7px;background:var(--bg3);border-radius:4px;overflow:hidden;}
+.pf{height:100%;border-radius:4px;background:var(--navy);transition:width 0.4s;}
+.pf-light{background:var(--navy-dim2);}
+.pf-mid{background:var(--navy2);}
+.psub{font-size:10px;color:var(--text3);margin-top:3px;}
+
+/* BIG PROGRESS */
+.bp{background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:22px;box-shadow:var(--sh);}
+.bp-amt{font-size:36px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums;line-height:1;}
+.bp-goal{font-size:12px;color:var(--text3);font-weight:500;}
+.bp-bar{height:12px;background:var(--bg3);border-radius:6px;overflow:hidden;margin:14px 0 10px;}
+.bp-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--navy),var(--navy2));}
+.bp-meta{display:flex;gap:24px;}
+.bpv{font-size:15px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;}
+.bpl{font-size:10px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:0.05em;}
+.pace{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;background:var(--navy-dim);color:var(--navy);border:1px solid rgba(30,58,95,0.2);}
+
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:13px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;}
+
+/* METRIC ROW */
+.mr{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);}
+.mr:last-child{border-bottom:none;}
+.mn{font-size:12px;font-weight:500;color:var(--text);}
+.ms{font-size:10px;color:var(--text3);margin-top:1px;}
+.mv{font-size:13px;font-weight:700;color:var(--navy);text-align:right;font-variant-numeric:tabular-nums;}
+.md{font-size:10px;font-weight:600;text-align:right;margin-top:1px;color:var(--text3);}
+.md.flag{color:var(--navy2);}
+.divider{height:1px;background:var(--border);margin:13px 0;}
+
+/* ALERT ITEMS — no bright colors, just navy tints + grays */
+.ai{display:flex;align-items:flex-start;gap:11px;padding:12px 14px;border-radius:var(--r);border:1px solid var(--border);background:var(--bg);margin-bottom:7px;}
+.ai:last-child{margin-bottom:0;}
+.ai.hi{background:var(--navy-dim);border-color:rgba(30,58,95,0.18);}
+.ai.mid{background:var(--bg3);border-color:var(--border2);}
+.ai.lo{background:var(--bg2);border-color:var(--border);}
+.aico{font-size:15px;flex-shrink:0;}
+.abody{flex:1;}
+.atit{font-size:12px;font-weight:700;margin-bottom:2px;color:var(--text);}
+.ai.hi .atit{color:var(--navy);}
+.adesc{font-size:11px;color:var(--text2);}
+.atime{font-size:10px;color:var(--text3);padding-left:10px;white-space:nowrap;flex-shrink:0;}
+
+/* TABLE */
+.tw{background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;box-shadow:var(--sh);}
+.thdr{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:var(--bg2);border-bottom:1px solid var(--border);}
+th{padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--border);transition:background 0.08s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:nth-child(even){background:#FAFBFD;}
+tbody tr:hover{background:var(--navy-dim)!important;}
+td{padding:11px 14px;vertical-align:middle;font-size:12px;}
+
+/* PDC ROWS */
+.pdc-row{display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid var(--border);}
+.pdc-row:last-child{border-bottom:none;}
+.pdc-row:hover{background:var(--bg2);}
+.pdc-row.flagged{background:var(--bg3);}
+.pdc-row.urgent{background:var(--navy-dim);}
+.pav{width:32px;height:32px;border-radius:50%;background:var(--navy-dim2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--navy);flex-shrink:0;}
+.pav.dim{background:var(--bg3);color:var(--text2);}
+.pamb{display:flex;align-items:center;gap:9px;width:185px;flex-shrink:0;}
+.pname{font-size:12px;font-weight:600;color:var(--text);}
+.phandle{font-size:10px;color:var(--text3);}
+.pgw{flex:1;}
+.pgl{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:4px;}
+.pgv{font-weight:700;color:var(--text2);}
+.pbar{height:7px;background:var(--bg3);border-radius:4px;overflow:hidden;}
+.pfill{height:100%;border-radius:4px;background:var(--navy);}
+.pfill.light{background:var(--border2);}
+.pstats{display:flex;gap:14px;flex-shrink:0;align-items:center;}
+.pst{text-align:center;}
+.psv{font-size:12px;font-weight:700;color:var(--navy);}
+.psv.dim{color:var(--text2);}
+.psl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;}
+
+/* ACCOUNTABILITY */
+.acr{display:flex;align-items:center;gap:10px;padding:11px 18px;border-bottom:1px solid var(--border);}
+.acr:last-child{border-bottom:none;}
+.acr:hover{background:var(--bg2);}
+.acav{width:30px;height:30px;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--bg4);color:var(--text2);}
+.acav.hi{background:var(--navy-dim2);color:var(--navy);}
+.acinfo{flex:1;}
+.acname{font-size:12px;font-weight:700;color:var(--text);}
+.actags{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;}
+.acacts{display:flex;gap:5px;flex-shrink:0;}
+
+/* CALENDAR */
+.wgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;}
+.dc{background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;}
+.dc.tod{border-color:var(--navy);border-width:2px;}
+.dh{padding:7px 8px;background:var(--bg2);border-bottom:1px solid var(--border);text-align:center;}
+.dn{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);}
+.dd{font-size:13px;font-weight:800;color:var(--text);margin-top:1px;}
+.dd.t{color:var(--navy);}
+.dp{padding:7px;display:flex;flex-direction:column;gap:4px;min-height:108px;}
+/* Post chips — all navy tints, differentiated by shade not hue */
+.pc{border-radius:5px;padding:4px 6px;font-size:10px;font-weight:600;line-height:1.3;}
+.pc-reel{background:var(--navy);color:#fff;border:1px solid var(--navy);}
+.pc-story{background:var(--navy-dim2);color:var(--navy);border:1px solid rgba(30,58,95,0.2);}
+.pc-static{background:var(--bg4);color:var(--text2);border:1px solid var(--border2);}
+.pc-tiktok{background:var(--navy2);color:#fff;border:1px solid var(--navy2);}
+.pc-photo{background:var(--bg3);color:var(--text);border:1px solid var(--border2);}
+.pc-empty{background:var(--bg2);color:var(--text3);border:1px dashed var(--border2);}
+.ptag{font-size:8px;color:rgba(255,255,255,0.65);display:block;margin-top:1px;}
+.pc-static .ptag,.pc-photo .ptag{color:var(--text3);}
+.pc-story .ptag{color:var(--navy2);}
+.pc-empty .ptag{display:none;}
+
+/* VS STANDINGS */
+.vscard{background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:22px;box-shadow:var(--sh);}
+.vsmgrs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;margin-bottom:18px;}
+.vsmgr{text-align:center;}
+.vsname{font-size:14px;font-weight:800;color:var(--text);}
+.vsrole{font-size:10px;color:var(--text3);margin-bottom:8px;}
+.vsscore{font-size:30px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;color:var(--navy);}
+.vsscore.tl{color:var(--text3);}
+.vsvs{font-size:14px;font-weight:800;color:var(--border2);text-align:center;}
+.vsrow{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);}
+.vsrow:last-child{border-bottom:none;}
+.vsa{width:65px;text-align:right;font-size:12px;font-weight:700;color:var(--text2);}
+.vsa.w{color:var(--navy);font-weight:800;}
+.vslbl{flex:1;font-size:11px;color:var(--text2);text-align:center;}
+.vsb{width:65px;text-align:left;font-size:12px;font-weight:700;color:var(--text3);}
+.vsb.w{color:var(--navy);font-weight:800;}
+
+/* SOCIAL FEED */
+.sfrow{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--border);}
+.sfrow:last-child{border-bottom:none;}
+.sfrow:hover{background:var(--bg2);}
+.sfrow.inactive{background:var(--bg3);}
+.sfav{width:26px;height:26px;border-radius:50%;background:var(--navy-dim2);color:var(--navy);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sfav.dim{background:var(--bg4);color:var(--text3);}
+.sfplat{font-size:13px;flex-shrink:0;}
+.sfhandle{font-size:11px;font-weight:600;color:var(--text);width:120px;flex-shrink:0;}
+.sfaction{font-size:11px;color:var(--text2);flex:1;}
+.sfmet{font-size:11px;font-weight:700;color:var(--navy);width:80px;text-align:right;flex-shrink:0;}
+.sfmet.dim{color:var(--text3);}
+.sftime{font-size:10px;color:var(--text3);width:55px;text-align:right;flex-shrink:0;}
+
+/* UPDATES */
+.upd{display:flex;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border);}
+.upd:last-child{border-bottom:none;}
+.upd.unread{background:var(--bg3);}
+.udot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.ubody{flex:1;}
+.utag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;color:var(--navy);}
+.utit{font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.utxt{font-size:11px;color:var(--text2);line-height:1.6;}
+.utime{font-size:10px;color:var(--text3);margin-top:4px;}
+
+/* TOOLS */
+.qlg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px;}
+.qlb{background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:15px;cursor:pointer;transition:all 0.12s;text-align:left;font-family:inherit;box-shadow:var(--sh);}
+.qlb:hover{border-color:var(--navy);background:var(--navy-dim);}
+.qlico{font-size:20px;margin-bottom:7px;display:block;}
+.qlt{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px;}
+.qld{font-size:10px;color:var(--text3);}
+.tmplg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px;}
+.tmpl{background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:15px;cursor:pointer;transition:all 0.12s;box-shadow:var(--sh);}
+.tmpl:hover{border-color:var(--navy);background:var(--navy-dim);}
+.tmlico{font-size:20px;margin-bottom:6px;}
+.tmln{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px;}
+.tmld{font-size:10px;color:var(--text3);}
+.pilg{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;}
+.pilcard{background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);padding:13px;box-shadow:var(--sh);}
+.piln{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--navy);margin-bottom:3px;}
+.pilt{font-size:11px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.pild{font-size:10px;color:var(--text2);line-height:1.5;}
+.sec-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);margin-bottom:10px;}
+
+/* AGENT */
+.agwrap{display:flex;flex-direction:column;height:420px;}
+.agmsgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:9px;}
+.msg{max-width:78%;border-radius:var(--r2);padding:10px 14px;font-size:12px;line-height:1.6;}
+.msg-u{background:var(--navy);color:#fff;align-self:flex-end;border-bottom-right-radius:3px;}
+.msg-a{background:var(--bg2);color:var(--text);align-self:flex-start;border:1px solid var(--border);border-bottom-left-radius:3px;}
+.mlbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;opacity:0.65;}
+.agin{padding:11px 14px;border-top:1px solid var(--border);display:flex;gap:7px;background:var(--bg2);}
+.aginput{flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);padding:8px 13px;color:var(--text);font-size:12px;font-family:inherit;outline:none;}
+.aginput:focus{border-color:var(--navy);}
+.aginput::placeholder{color:var(--text3);}
+.thdots{display:flex;gap:3px;align-items:center;}
+.thdot{width:5px;height:5px;border-radius:50%;background:var(--text3);animation:pp 1.1s infinite;}
+.thdot:nth-child(2){animation-delay:0.18s;}.thdot:nth-child(3){animation-delay:0.36s;}
+@keyframes pp{0%,100%{opacity:0.3;transform:scale(0.8);}50%{opacity:1;transform:scale(1);}}
+
+/* CHIP TABS */
+.chips{display:flex;gap:3px;background:var(--bg3);border-radius:20px;padding:3px;}
+.chip{padding:4px 13px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:var(--text2);border:none;font-family:inherit;transition:all 0.12s;}
+.chip.on{background:var(--bg);color:var(--navy);box-shadow:var(--sh);}
+
+/* ═══ AMBASSADOR PROFILE MODAL ═══ */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);backdrop-filter:blur(3px);z-index:200;display:none;align-items:center;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:var(--bg);border:1px solid var(--border);border-radius:16px;width:740px;max-width:96vw;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--sh2);}
+.mhdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);}
+.mhdr-title{font-size:14px;font-weight:700;color:var(--text);}
+.mhdr-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+.mclose{background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;padding:2px 6px;border-radius:var(--r);line-height:1;}
+.mclose:hover{background:var(--bg3);color:var(--text);}
+.mbody{overflow-y:auto;padding:20px;flex:1;}
+.mftr{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--bg2);}
+
+/* Profile header */
+.amb-head{display:flex;align-items:center;gap:14px;margin-bottom:18px;padding:16px;background:var(--bg2);border-radius:var(--r2);border:1px solid var(--border);}
+.amb-av{width:48px;height:48px;border-radius:50%;background:var(--navy-dim2);color:var(--navy);font-size:16px;font-weight:900;display:flex;align-items:center;justify-content:center;border:2px solid rgba(30,58,95,0.2);}
+.amb-info{flex:1;}
+.amb-fullname{font-size:16px;font-weight:800;color:var(--text);}
+.amb-handle{font-size:12px;color:var(--text3);}
+.amb-meta{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
+.amb-rev{font-size:22px;font-weight:800;color:var(--navy);text-align:right;}
+.amb-rev-lbl{font-size:10px;color:var(--text3);text-align:right;}
+
+/* Profile tabs */
+.ptabs{display:flex;gap:1px;background:var(--bg3);border-radius:var(--r);padding:3px;border:1px solid var(--border);margin-bottom:16px;}
+.ptab{flex:1;padding:6px 10px;border-radius:6px;border:none;background:transparent;color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;text-align:center;transition:all 0.13s;}
+.ptab.on{background:var(--bg);color:var(--navy);box-shadow:var(--sh);}
+.ptc{display:none;}
+.ptc.on{display:block;}
+
+/* PDC Upload zone */
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--r2);padding:22px;text-align:center;cursor:pointer;transition:all 0.13s;margin-bottom:12px;}
+.upload-zone:hover{border-color:var(--navy);background:var(--navy-dim);}
+.uz-ico{font-size:28px;margin-bottom:8px;}
+.uz-txt{font-size:12px;color:var(--text2);font-weight:500;}
+.uz-sub{font-size:10px;color:var(--text3);margin-top:3px;}
+
+/* PDC file rows */
+.pdc-file{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg2);border-radius:var(--r);border:1px solid var(--border);margin-bottom:7px;}
+.pdc-file:last-child{margin-bottom:0;}
+.pdc-file-ico{font-size:20px;}
+.pdc-file-name{flex:1;font-size:12px;font-weight:600;color:var(--text);}
+.pdc-file-meta{font-size:10px;color:var(--text3);}
+.notes-area{width:100%;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);padding:12px;color:var(--text);font-size:12px;font-family:inherit;resize:vertical;min-height:100px;outline:none;}
+.notes-area:focus{border-color:var(--navy);}
+
+/* MISC */
+.bold{font-weight:700;}.muted{color:var(--text2);}
+.navy{color:var(--navy);}
+.num{font-variant-numeric:tabular-nums;}
+
+@media(max-width:900px){
+  .sidebar{width:54px;min-width:54px;}
+  .ngl,.nga,.nav-item span:not(.nico),.mgr-pill,.nbadge{display:none;}
+  .g2,.g21{grid-template-columns:1fr;}
+  .wgrid{grid-template-columns:repeat(4,1fr);}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ═══ SIDEBAR ═══ -->
+<nav class="sidebar">
+  <div class="brand">
+    <div class="brand-name">Obsidian</div>
+    <div class="brand-sub">Manager Dashboard</div>
+  </div>
+  <div class="mgr-pill">
+    <div class="mgr-name">Rachel M.</div>
+    <div class="mgr-role">Athlete Manager · Team A</div>
+    <div class="mgr-live"><div class="live-dot"></div><div class="live-txt">57 Ambassadors</div></div>
+  </div>
+  <div class="nav">
+
+    <div class="nav-group" id="g-home">
+      <div class="ngt" onclick="toggleGroup('g-home')"><span class="ngl">Home</span><span class="nga">▾</span></div>
+      <div class="ngi" id="g-home-i">
+        <a class="nav-item active" href="#home"><span class="nico">⬡</span><span>Dashboard</span></a>
+        <a class="nav-item" href="#updates"><span class="nico">📣</span><span>Updates</span><span class="nbadge alert">2</span></a>
+      </div>
+    </div>
+
+    <div class="nav-group" id="g-sales">
+      <div class="ngt" onclick="toggleGroup('g-sales')"><span class="ngl">Sales</span><span class="nga">▾</span></div>
+      <div class="ngi" id="g-sales-i">
+        <a class="nav-item" href="#roster"><span class="nico">◎</span><span>My Roster</span></a>
+        <a class="nav-item" href="#bonus"><span class="nico">⭐</span><span>Bonus Tracker</span></a>
+        <a class="nav-item" href="#standings"><span class="nico">⊞</span><span>Manager Standings</span></a>
+      </div>
+    </div>
+
+    <div class="nav-group" id="g-amb">
+      <div class="ngt" onclick="toggleGroup('g-amb')"><span class="ngl">Ambassadors</span><span class="nga">▾</span></div>
+      <div class="ngi" id="g-amb-i">
+        <a class="nav-item" href="#pdc"><span class="nico">◐</span><span>PDC Tracker</span><span class="nbadge alert">4</span></a>
+        <a class="nav-item" href="#accountability"><span class="nico">⚑</span><span>Accountability</span><span class="nbadge">6</span></a>
+      </div>
+    </div>
+
+    <div class="nav-group" id="g-content">
+      <div class="ngt" onclick="toggleGroup('g-content')"><span class="ngl">Content</span><span class="nga">▾</span></div>
+      <div class="ngi" id="g-content-i">
+        <a class="nav-item" href="#calendar"><span class="nico">◫</span><span>Content Calendar</span></a>
+      </div>
+    </div>
+
+    <div class="nav-group" id="g-social">
+      <div class="ngt" onclick="toggleGroup('g-social')"><span class="ngl">Social</span><span class="nga">▾</span></div>
+      <div class="ngi" id="g-social-i">
+        <a class="nav-item" href="#social"><span class="nico">◬</span><span>Social Feed</span><span class="nbadge">Live</span></a>
+      </div>
+    </div>
+
+    <div class="nav-group" id="g-tools">
+      <div class="ngt" onclick="toggleGroup('g-tools')"><span class="ngl">Tools</span><span class="nga">▾</span></div>
+      <div class="ngi" id="g-tools-i">
+        <a class="nav-item" href="#tools"><span class="nico">⊞</span><span>Templates &amp; AI</span></a>
+      </div>
+    </div>
+
+  </div>
+  <div class="sf">v2.0 · Obsidian OS</div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+  <div class="topbar">
+    <div><div class="tt">Manager Dashboard — Rachel M.</div><div class="ts">Team A · 57 ambassadors · Updated just now</div></div>
+    <div class="tr">
+      <button class="btn btn-g btn-sm">⟳ Refresh</button>
+      <button class="btn btn-g btn-sm">↓ Export</button>
+      <button class="btn btn-p btn-sm">+ New PDC</button>
+    </div>
+  </div>
+
+  <div class="page">
+
+  <!-- ══ HOME ══ -->
+  <div class="sb" id="home">
+    <div class="sh">
+      <div class="stitle">⬡ Dashboard · May 17, 2026</div>
+      <div class="chips"><button class="chip on">This Week</button><button class="chip">This Month</button></div>
+    </div>
+    <div class="g21" style="margin-bottom:13px">
+      <div class="bp">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px">
+          <div><div class="bp-amt">$4,218</div><div class="bp-goal">of $8,000 monthly goal</div></div>
+          <span class="pace">↑ On pace for bonus</span>
+        </div>
+        <div class="bp-bar"><div class="bp-fill" style="width:53%"></div></div>
+        <div class="bp-meta">
+          <div><div class="bpv">$375</div><div class="bpl">Today</div></div>
+          <div><div class="bpv">$1,400</div><div class="bpl">This Week</div></div>
+          <div><div class="bpv">14</div><div class="bpl">Days Left</div></div>
+          <div><div class="bpv">$270/d</div><div class="bpl">Needed</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct">Goal Snapshot</span></div>
+        <div class="cb" style="padding:12px 16px">
+          <div class="mr"><div><div class="mn">💰 Sales Goal</div><div class="ms">$1,400 / $2,000 weekly</div></div><div><div class="mv">70%</div><div class="md flag">Moderate</div></div></div>
+          <div class="mr"><div><div class="mn">📱 Content Goal</div><div class="ms">24 / 30 posts this week</div></div><div><div class="mv">80%</div><div class="md flag">Successful</div></div></div>
+          <div class="mr"><div><div class="mn">🤝 Community Health</div><div class="ms">34 / 57 ambassadors active</div></div><div><div class="mv">60%</div><div class="md">Moderate</div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="sh" style="margin-top:4px"><div class="stitle">⚑ Action Required</div><span class="badge b-flag">6 need attention</span></div>
+    <div class="g2">
+      <div>
+        <div class="ai hi"><div class="aico">◈</div><div class="abody"><div class="atit">Priya S. — No contact 14 days</div><div class="adesc">@priyaactive · 1 post this month · 20% of goal. DM immediately.</div></div><div class="atime">Now</div></div>
+        <div class="ai hi"><div class="aico">◈</div><div class="abody"><div class="atit">Riley L. — At Risk (47% of goal)</div><div class="adesc">3 posts only. PDC overdue. Book a call this week.</div></div><div class="atime">2d</div></div>
+        <div class="ai mid"><div class="aico">◐</div><div class="abody"><div class="atit">4 PDCs due before May 24</div><div class="adesc">Mel V., Sophie K., Riley L., Priya S.</div></div><div class="atime">Today</div></div>
+      </div>
+      <div>
+        <div class="ai mid"><div class="aico">◫</div><div class="abody"><div class="atit">Content Gap — Pillars 4 &amp; 5 underused</div><div class="adesc">Only 3 lifestyle/photo posts this week. Coach ambassadors to diversify.</div></div><div class="atime">Today</div></div>
+        <div class="ai lo"><div class="aico">⬡</div><div class="abody"><div class="atit">Crystal M. eligible for tier upgrade</div><div class="adesc">Hit 140% this month. Confirm promotion with Nick.</div></div><div class="atime">Today</div></div>
+        <div class="ai lo"><div class="aico">◎</div><div class="abody"><div class="atit">Compression Shorts launch May 28 — 45 posts unscheduled</div><div class="adesc">Ensure all ambassadors have content before May 25.</div></div><div class="atime">11d</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ UPDATES ══ -->
+  <div class="sb" id="updates">
+    <div class="sh"><div class="stitle">📣 Updates &amp; Announcements</div><span class="badge b-flag">2 Unread</span></div>
+    <div class="card">
+      <div class="upd unread"><div class="udot" style="background:var(--navy)"></div><div class="ubody"><div class="utag">Urgent</div><div class="utit">New Commission Structure — Effective June 1</div><div class="utxt">Bronze 8%, Silver 10%, Gold 12%, Elite 15%. Inform all ambassadors before May 28 PDC calls.</div><div class="utime">Nick · May 17, 2026 · 2:41 AM</div></div></div>
+      <div class="upd unread"><div class="udot" style="background:var(--navy2)"></div><div class="ubody"><div class="utag">Product Launch</div><div class="utit">Compression Shorts — May 28</div><div class="utxt">Schedule content May 26–31. Priority: P1 (UGC) + P2 (Gym). Sample coordination with Nick by May 22.</div><div class="utime">Nick · May 16, 2026</div></div></div>
+      <div class="upd"><div class="udot" style="background:var(--border2)"></div><div class="ubody"><div class="utag">Campaign</div><div class="utit">Push-Up Challenge Active · May 10–24</div><div class="utxt">Get every ambassador to participate. Counts toward community health score.</div><div class="utime">Nick · May 10, 2026</div></div></div>
+      <div class="upd"><div class="udot" style="background:var(--border2)"></div><div class="ubody"><div class="utag">Monthly</div><div class="utit">April Closed at $8,200 Combined — May target: +20%</div><div class="utxt">Team A led with $4,218. Targets have been updated accordingly.</div><div class="utime">Nick · May 1, 2026</div></div></div>
+    </div>
+  </div>
+
+  <!-- ══ ROSTER ══ -->
+  <div class="sb" id="roster">
+    <div class="sh">
+      <div class="stitle">◎ My Roster</div>
+      <div style="display:flex;gap:7px;align-items:center">
+        <div class="chips"><button class="chip on">All</button><button class="chip">Elite</button><button class="chip">Gold</button><button class="chip">Silver</button><button class="chip">Bronze</button></div>
+        <button class="btn btn-p btn-sm">+ Add Ambassador</button>
+      </div>
+    </div>
+    <div class="tw">
+      <div class="thdr"><div style="display:flex;align-items:center;gap:9px"><span class="ct">57 Ambassadors</span><span class="muted" style="font-size:11px">Sorted by revenue</span></div><button class="btn btn-g btn-sm">↓ Export</button></div>
+      <table>
+        <thead><tr><th>#</th><th>Ambassador</th><th>Tier</th><th>Revenue (30d)</th><th>Commission</th><th>Posts</th><th>Goal %</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="bold muted">1</td><td><div class="bold">@crystalbeauty</div><div class="muted" style="font-size:10px">Crystal M.</div></td><td><span class="tier t-e">Elite</span></td><td class="bold navy">$1,400</td><td>$140</td><td>12</td><td><span class="badge b-navy">140%</span></td><td><span class="badge b-navy">Exceeding</span></td><td><button class="btn btn-g btn-xs" onclick="openProfile('Crystal M.','@crystalbeauty','Elite','$1,400','140%','CM')">Profile</button></td></tr>
+          <tr><td class="bold muted">2</td><td><div class="bold">@glowwithgrace</div><div class="muted" style="font-size:10px">Grace T.</div></td><td><span class="tier t-g">Gold</span></td><td class="bold navy">$980</td><td>$88</td><td>9</td><td><span class="badge b-navy">123%</span></td><td><span class="badge b-navy">Exceeding</span></td><td><button class="btn btn-g btn-xs" onclick="openProfile('Grace T.','@glowwithgrace','Gold','$980','123%','GT')">Profile</button></td></tr>
+          <tr><td class="bold muted">3</td><td><div class="bold">@obsidianbabe</div><div class="muted" style="font-size:10px">Jess R.</div></td><td><span class="tier t-s">Silver</span></td><td class="bold">$620</td><td>$50</td><td>8</td><td><span class="badge b-gray">103%</span></td><td><span class="badge b-gray">On Track</span></td><td><button class="btn btn-g btn-xs" onclick="openProfile('Jess R.','@obsidianbabe','Silver','$620','103%','JR')">Profile</button></td></tr>
+          <tr><td class="bold muted">4</td><td><div class="bold">@makeupbymel</div><div class="muted" style="font-size:10px">Mel V.</div></td><td><span class="tier t-b">Bronze</span></td><td class="bold">$340</td><td>$24</td><td>5</td><td><span class="badge b-gray">68%</span></td><td><span class="badge b-gray">Behind</span></td><td><button class="btn btn-g btn-xs" onclick="openProfile('Mel V.','@makeupbymel','Bronze','$340','68%','MV')">Profile</button></td></tr>
+          <tr><td class="bold muted">5</td><td><div class="bold">@rileylooks</div><div class="muted" style="font-size:10px">Riley L.</div></td><td><span class="tier t-m">Member</span></td><td class="bold">$140</td><td>$10</td><td>3</td><td><span class="badge b-dark">47%</span></td><td><span class="badge b-dark">At Risk</span></td><td><button class="btn btn-g btn-xs" onclick="openProfile('Riley L.','@rileylooks','Member','$140','47%','RL')">Profile</button></td></tr>
+          <tr><td class="bold muted">6</td><td><div class="bold">@priyaactive</div><div class="muted" style="font-size:10px">Priya S.</div></td><td><span class="tier t-m">Member</span></td><td class="bold muted">$60</td><td>$4</td><td>1</td><td><span class="badge b-dark">20%</span></td><td><span class="badge b-dark">Inactive</span></td><td><button class="btn btn-g btn-xs" onclick="openProfile('Priya S.','@priyaactive','Member','$60','20%','PS')">Profile</button></td></tr>
+        </tbody>
+      </table>
+      <div class="cf" style="display:flex;justify-content:space-between;align-items:center"><span class="muted" style="font-size:11px">Showing 6 of 57 · May 2026</span><button class="btn btn-g btn-sm">View All →</button></div>
+    </div>
+  </div>
+
+  <!-- ══ BONUS TRACKER ══ -->
+  <div class="sb" id="bonus">
+    <div class="sh"><div class="stitle">⭐ Manager Bonus Tracker</div><span class="badge b-gray">Unlocks at $8,000 pod revenue</span></div>
+    <div class="g21">
+      <div class="bp">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px">
+          <div><div class="bp-amt">$4,218</div><div class="bp-goal">of $8,000 bonus target · May 2026</div></div>
+          <span class="pace">↑ On pace</span>
+        </div>
+        <div class="bp-bar"><div class="bp-fill" style="width:53%"></div></div>
+        <div class="bp-meta" style="margin-bottom:16px">
+          <div><div class="bpv">53%</div><div class="bpl">Progress</div></div>
+          <div><div class="bpv">$3,782</div><div class="bpl">Remaining</div></div>
+          <div><div class="bpv">14d</div><div class="bpl">Left</div></div>
+          <div><div class="bpv">$270/d</div><div class="bpl">Needed</div></div>
+        </div>
+        <div class="pw"><div class="pl"><span class="pn">Goal Achievement Rate</span><span class="pv">78% / 85% target</span></div><div class="pb"><div class="pf" style="width:92%"></div></div></div>
+        <div class="pw"><div class="pl"><span class="pn">Tier Upgrades</span><span class="pv">5 / 8 target</span></div><div class="pb"><div class="pf pf-mid" style="width:63%"></div></div></div>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct">What Gets You There</span></div>
+        <div class="cb" style="padding:12px 16px">
+          <div class="mr"><div><div class="mn">Daily revenue needed</div></div><div><div class="mv">$270/day</div><div class="md flag">Current avg $341 ✓</div></div></div>
+          <div class="mr"><div><div class="mn">Ambassadors to activate</div><div class="ms">13 currently inactive</div></div><div><div class="mv">4 more</div></div></div>
+          <div class="mr"><div><div class="mn">Goal rate gap</div></div><div><div class="mv">+7% needed</div></div></div>
+          <div class="mr"><div><div class="mn">Tier upgrades</div></div><div><div class="mv">3 more</div></div></div>
+          <div style="margin-top:13px;padding:12px;background:var(--navy-dim);border-radius:var(--r);border:1px solid rgba(30,58,95,0.15)">
+            <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:3px">You're on pace for the bonus</div>
+            <div style="font-size:11px;color:var(--text2)">Activate 4 inactive ambassadors to lock in the goal rate threshold.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MANAGER STANDINGS ══ -->
+  <div class="sb" id="standings">
+    <div class="sh"><div class="stitle">⊞ Manager Standings</div><span class="badge b-navy">May 2026</span></div>
+    <div class="g2">
+      <div class="vscard">
+        <div class="vsmgrs">
+          <div class="vsmgr"><div class="vsname">Rachel M.</div><div class="vsrole">Team A · 57 ambassadors</div><div class="vsscore">$4,218</div><div style="margin-top:7px"><span class="badge b-navy">Leading</span></div></div>
+          <div class="vsvs">VS</div>
+          <div class="vsmgr"><div class="vsname">Jordan K.</div><div class="vsrole">Team B · 52 ambassadors</div><div class="vsscore tl">$3,790</div><div style="margin-top:7px"><span class="badge b-gray">−$428</span></div></div>
+        </div>
+        <div>
+          <div class="vsrow"><div class="vsa w">$4,218</div><div class="vslbl">Team Revenue (30d)</div><div class="vsb">$3,790</div></div>
+          <div class="vsrow"><div class="vsa w">78%</div><div class="vslbl">Goal Achievement</div><div class="vsb">71%</div></div>
+          <div class="vsrow"><div class="vsa w">34</div><div class="vslbl">Posts This Week</div><div class="vsb">28</div></div>
+          <div class="vsrow"><div class="vsa w">5</div><div class="vslbl">Tier Upgrades (30d)</div><div class="vsb">3</div></div>
+          <div class="vsrow"><div class="vsa">2</div><div class="vslbl">Inactive Ambassadors</div><div class="vsb w">1</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct">Month-to-Date</span><span class="badge b-navy">May 2026</span></div>
+        <div class="cb" style="padding:12px 16px">
+          <div class="mr"><div><div class="mn">🥇 Rachel M. — Team A</div><div class="ms">57 ambassadors · Leading</div></div><div><div class="mv">$4,218</div><div class="md flag">+$428 ahead</div></div></div>
+          <div class="mr"><div><div class="mn">🥈 Jordan K. — Team B</div><div class="ms">52 ambassadors</div></div><div><div class="mv muted">$3,790</div><div class="md">$428 behind</div></div></div>
+          <div class="divider"></div>
+          <div class="mr"><div><div class="mn">Combined Revenue</div></div><div><div class="mv">$8,008</div><div class="md flag">↑ 21% vs April</div></div></div>
+          <div class="mr"><div><div class="mn">Combined Tier Upgrades</div></div><div><div class="mv">8</div><div class="md flag">↑ 3 vs last month</div></div></div>
+          <div style="margin-top:13px;padding:12px;background:var(--navy-dim);border-radius:var(--r);border:1px solid rgba(30,58,95,0.14)">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--navy);margin-bottom:4px">Month-End Projection</div>
+            <div style="font-size:12px;color:var(--text2)">Team A on track to finish at <strong style="color:var(--navy)">~$6,100</strong> — a new monthly record. Hit 80%+ goal rate to lock in the win.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PDC TRACKER ══ -->
+  <div class="sb" id="pdc">
+    <div class="sh"><div class="stitle">◐ PDC Tracker</div><div style="display:flex;gap:7px;align-items:center"><span class="badge b-flag">4 Behind</span><button class="btn btn-p btn-sm">+ New PDC</button></div></div>
+    <div class="card">
+      <div class="ch"><span class="ct">Ambassador Goal Progress · May 12–24</span></div>
+      <div>
+        <div class="pdc-row"><div class="pamb"><div class="pav">CM</div><div><div class="pname">Crystal M.</div><div class="phandle">@crystalbeauty · Next: May 28</div></div></div><div class="pgw"><div class="pgl"><span>$0</span><span class="pgv">$1,400 / $1,000</span></div><div class="pbar"><div class="pfill" style="width:100%"></div></div></div><div class="pstats"><div class="pst"><div class="psv">$1,400</div><div class="psl">Actual</div></div><div class="pst"><div class="psv">12</div><div class="psl">Posts</div></div><span class="badge b-navy">+140%</span><button class="btn btn-g btn-xs" onclick="openProfile('Crystal M.','@crystalbeauty','Elite','$1,400','140%','CM')">PDCs</button></div></div>
+        <div class="pdc-row"><div class="pamb"><div class="pav">GT</div><div><div class="pname">Grace T.</div><div class="phandle">@glowwithgrace · Next: May 30</div></div></div><div class="pgw"><div class="pgl"><span>$0</span><span class="pgv">$980 / $800</span></div><div class="pbar"><div class="pfill" style="width:100%"></div></div></div><div class="pstats"><div class="pst"><div class="psv">$980</div><div class="psl">Actual</div></div><div class="pst"><div class="psv">9</div><div class="psl">Posts</div></div><span class="badge b-navy">+123%</span><button class="btn btn-g btn-xs" onclick="openProfile('Grace T.','@glowwithgrace','Gold','$980','123%','GT')">PDCs</button></div></div>
+        <div class="pdc-row"><div class="pamb"><div class="pav">JR</div><div><div class="pname">Jess R.</div><div class="phandle">@obsidianbabe · Next: May 29</div></div></div><div class="pgw"><div class="pgl"><span>$0</span><span class="pgv">$620 / $600</span></div><div class="pbar"><div class="pfill" style="width:100%"></div></div></div><div class="pstats"><div class="pst"><div class="psv">$620</div><div class="psl">Actual</div></div><div class="pst"><div class="psv">8</div><div class="psl">Posts</div></div><span class="badge b-gray">On Track</span><button class="btn btn-g btn-xs" onclick="openProfile('Jess R.','@obsidianbabe','Silver','$620','103%','JR')">PDCs</button></div></div>
+        <div class="pdc-row flagged"><div class="pamb"><div class="pav dim">MV</div><div><div class="pname">Mel V.</div><div class="phandle">@makeupbymel · PDC Overdue</div></div></div><div class="pgw"><div class="pgl"><span>$0</span><span class="pgv">$340 / $500</span></div><div class="pbar"><div class="pfill pf-mid" style="width:68%"></div></div></div><div class="pstats"><div class="pst"><div class="psv dim">$340</div><div class="psl">Actual</div></div><div class="pst"><div class="psv dim">5</div><div class="psl">Posts</div></div><span class="badge b-dark">68%</span><button class="btn btn-p btn-xs">Book PDC</button></div></div>
+        <div class="pdc-row urgent"><div class="pamb"><div class="pav">RL</div><div><div class="pname">Riley L.</div><div class="phandle">@rileylooks · Overdue — At Risk</div></div></div><div class="pgw"><div class="pgl"><span>$0</span><span class="pgv">$140 / $300</span></div><div class="pbar"><div class="pfill pf-light" style="width:47%"></div></div></div><div class="pstats"><div class="pst"><div class="psv dim">$140</div><div class="psl">Actual</div></div><div class="pst"><div class="psv dim">3</div><div class="psl">Posts</div></div><span class="badge b-flag">47%</span><button class="btn btn-p btn-xs">Urgent</button></div></div>
+        <div class="pdc-row urgent"><div class="pamb"><div class="pav">PS</div><div><div class="pname">Priya S.</div><div class="phandle">@priyaactive · 14 days no contact</div></div></div><div class="pgw"><div class="pgl"><span>$0</span><span class="pgv">$60 / $300</span></div><div class="pbar"><div class="pfill pf-light" style="width:20%"></div></div></div><div class="pstats"><div class="pst"><div class="psv dim">$60</div><div class="psl">Actual</div></div><div class="pst"><div class="psv dim">1</div><div class="psl">Posts</div></div><span class="badge b-flag">20%</span><button class="btn btn-p btn-xs">DM Now</button></div></div>
+      </div>
+      <div class="cf" style="display:flex;justify-content:space-between;align-items:center"><span class="muted" style="font-size:11px">Showing 6 of 57 · 4 flagged</span><button class="btn btn-g btn-sm">View All →</button></div>
+    </div>
+  </div>
+
+  <!-- ══ ACCOUNTABILITY ══ -->
+  <div class="sb" id="accountability">
+    <div class="sh"><div class="stitle">⚑ Accountability Board</div><div style="display:flex;gap:6px"><span class="badge b-flag">2 Immediate</span><span class="badge b-gray">4 Behind</span></div></div>
+    <div class="g2">
+      <div class="card">
+        <div class="ch"><span class="ct">Immediate Follow-Up</span></div>
+        <div>
+          <div class="acr"><div class="acav hi">RL</div><div class="acinfo"><div class="acname">Riley L. <span class="muted" style="font-size:10px">@rileylooks</span></div><div class="actags"><span class="badge b-flag">47% of goal</span><span class="badge b-gray">3 posts</span><span class="badge b-gray">PDC overdue</span></div></div><div class="acacts"><button class="btn btn-p btn-xs">Book PDC</button></div></div>
+          <div class="acr"><div class="acav hi">PS</div><div class="acinfo"><div class="acname">Priya S. <span class="muted" style="font-size:10px">@priyaactive</span></div><div class="actags"><span class="badge b-flag">20% of goal</span><span class="badge b-flag">1 post</span><span class="badge b-flag">14d silent</span></div></div><div class="acacts"><button class="btn btn-p btn-xs">DM Now</button></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct">Behind — Recoverable</span></div>
+        <div>
+          <div class="acr"><div class="acav">MV</div><div class="acinfo"><div class="acname">Mel V. <span class="muted" style="font-size:10px">@makeupbymel</span></div><div class="actags"><span class="badge b-dark">68%</span><span class="badge b-gray">3 posts missing</span></div></div><div class="acacts"><button class="btn btn-g btn-xs">Check In</button></div></div>
+          <div class="acr"><div class="acav">SK</div><div class="acinfo"><div class="acname">Sophie K. <span class="muted" style="font-size:10px">@skinkare.soph</span></div><div class="actags"><span class="badge b-dark">70%</span><span class="badge b-gray">2 posts needed</span></div></div><div class="acacts"><button class="btn btn-g btn-xs">Nudge</button></div></div>
+          <div class="acr"><div class="acav">KL</div><div class="acinfo"><div class="acname">Kayla L. <span class="muted" style="font-size:10px">@kaylafitlife</span></div><div class="actags"><span class="badge b-dark">74%</span><span class="badge b-gray">PDC not booked</span></div></div><div class="acacts"><button class="btn btn-g btn-xs">Book PDC</button></div></div>
+          <div class="acr"><div class="acav">ZM</div><div class="acinfo"><div class="acname">Zara M. <span class="muted" style="font-size:10px">@zaramovement</span></div><div class="actags"><span class="badge b-dark">65%</span><span class="badge b-gray">8d since post</span></div></div><div class="acacts"><button class="btn btn-g btn-xs">Nudge</button></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CONTENT CALENDAR ══ -->
+  <div class="sb" id="calendar">
+    <div class="sh">
+      <div class="stitle">◫ Content Calendar · May 12–18</div>
+      <div style="display:flex;gap:7px;align-items:center">
+        <span class="badge b-navy">34 posts</span>
+        <span class="badge b-dark">P4 &amp; P5 low</span>
+        <button class="btn btn-g btn-sm">← Prev</button>
+        <button class="btn btn-p btn-sm">+ Add Post</button>
+        <button class="btn btn-g btn-sm">Next →</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="ch"><span class="ct">Pillar Breakdown</span><span class="muted" style="font-size:11px">P1=UGC · P2=Gym · P3=Testimonial · P4=Lifestyle · P5=Photo</span></div>
+      <div class="cb" style="display:flex;gap:14px;align-items:center">
+        <div style="flex:1"><div class="pl"><span class="pn">P1</span><span class="pv">7</span></div><div class="pb"><div class="pf" style="width:70%"></div></div></div>
+        <div style="flex:1"><div class="pl"><span class="pn">P2</span><span class="pv">8</span></div><div class="pb"><div class="pf" style="width:80%"></div></div></div>
+        <div style="flex:1"><div class="pl"><span class="pn">P3</span><span class="pv">6</span></div><div class="pb"><div class="pf pf-mid" style="width:60%"></div></div></div>
+        <div style="flex:1"><div class="pl"><span class="pn">P4</span><span class="pv muted">2</span></div><div class="pb"><div class="pf pf-light" style="width:20%"></div></div></div>
+        <div style="flex:1"><div class="pl"><span class="pn">P5</span><span class="pv muted">1</span></div><div class="pb"><div class="pf pf-light" style="width:10%"></div></div></div>
+      </div>
+    </div>
+    <div class="wgrid">
+      <div class="dc"><div class="dh"><div class="dn">Mon</div><div class="dd">12</div></div><div class="dp"><div class="pc pc-reel">@crystalbeauty<span class="ptag">P1 · Reel</span></div><div class="pc pc-story">@glowwithgrace<span class="ptag">P2 · Story</span></div><div class="pc pc-static">@obsidianbabe<span class="ptag">P3 · Static</span></div></div></div>
+      <div class="dc"><div class="dh"><div class="dn">Tue</div><div class="dd">13</div></div><div class="dp"><div class="pc pc-reel">@glowwithgrace<span class="ptag">P1 · Reel</span></div><div class="pc pc-tiktok">@fitwithtara<span class="ptag">P2 · TikTok</span></div><div class="pc pc-story">@crystalbeauty<span class="ptag">P4 · Story</span></div></div></div>
+      <div class="dc"><div class="dh"><div class="dn">Wed</div><div class="dd">14</div></div><div class="dp"><div class="pc pc-reel">@fitwithtara<span class="ptag">P2 · Reel</span></div><div class="pc pc-tiktok">@crystalbeauty<span class="ptag">P2 · TikTok</span></div><div class="pc pc-static">@skinkare.soph<span class="ptag">P1 · Static</span></div></div></div>
+      <div class="dc"><div class="dh"><div class="dn">Thu</div><div class="dd">15</div></div><div class="dp"><div class="pc pc-reel">@makeupbymel<span class="ptag">P1 · Reel</span></div><div class="pc pc-story">@fitwithtara<span class="ptag">P2 · Story</span></div><div class="pc pc-empty">+ Add post</div></div></div>
+      <div class="dc tod"><div class="dh" style="background:var(--navy-dim)"><div class="dn" style="color:var(--navy)">Fri · Today</div><div class="dd t">16</div></div><div class="dp"><div class="pc pc-reel">@crystalbeauty<span class="ptag">P3 · Reel</span></div><div class="pc pc-story">@glowwithgrace<span class="ptag">P1 · Story</span></div><div class="pc pc-tiktok">@obsidianbabe<span class="ptag">P2 · TikTok</span></div></div></div>
+      <div class="dc"><div class="dh"><div class="dn">Sat</div><div class="dd">17</div></div><div class="dp"><div class="pc pc-reel">@fitwithtara<span class="ptag">P2 · Reel</span></div><div class="pc pc-photo">@crystalbeauty<span class="ptag">P5 · Photo</span></div><div class="pc pc-empty">+ Add post</div></div></div>
+      <div class="dc"><div class="dh"><div class="dn">Sun</div><div class="dd">18</div></div><div class="dp"><div class="pc pc-static">@glowwithgrace<span class="ptag">P4 · Static</span></div><div class="pc pc-empty">+ Add post</div></div></div>
+    </div>
+    <div style="margin-top:9px;display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+      <span class="muted" style="font-size:11px;font-weight:500">Format:</span>
+      <span class="pc pc-reel" style="font-size:9px;padding:2px 7px">Reel</span>
+      <span class="pc pc-tiktok" style="font-size:9px;padding:2px 7px">TikTok</span>
+      <span class="pc pc-story" style="font-size:9px;padding:2px 7px">Story</span>
+      <span class="pc pc-static" style="font-size:9px;padding:2px 7px">Static</span>
+      <span class="pc pc-photo" style="font-size:9px;padding:2px 7px">Photo</span>
+      <span class="pc pc-empty" style="font-size:9px;padding:2px 7px">Open Slot</span>
+    </div>
+  </div>
+
+  <!-- ══ SOCIAL FEED ══ -->
+  <div class="sb" id="social">
+    <div class="sh">
+      <div class="stitle">◬ Live Social Feed</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="sdot sdot-on">Live via Composio</span>
+        <span class="badge b-gray">OpenClaw pending</span>
+      </div>
+    </div>
+    <div class="tw">
+      <div class="thdr"><span class="ct">Recent Ambassador Activity</span><span class="muted" style="font-size:11px">Auto-updates every 6h when OpenClaw reconnects</span></div>
+      <div>
+        <div class="sfrow"><div class="sfav">CM</div><div class="sfplat">📸</div><div class="sfhandle">@crystalbeauty</div><div class="sfaction">Reel — P1 UGC · tagged @obsidianforged</div><div class="sfmet">42.1K views</div><div class="sftime">2h ago</div></div>
+        <div class="sfrow"><div class="sfav">GT</div><div class="sfplat">🎵</div><div class="sfhandle">@glowwithgrace</div><div class="sfaction">TikTok — P2 Gym Reel · discount code mentioned</div><div class="sfmet">18.4K views</div><div class="sftime">4h ago</div></div>
+        <div class="sfrow"><div class="sfav">JR</div><div class="sfplat">📸</div><div class="sfhandle">@obsidianbabe</div><div class="sfaction">Story — P3 community mention · tagged followers</div><div class="sfmet dim">Story</div><div class="sftime">5h ago</div></div>
+        <div class="sfrow"><div class="sfav">TN</div><div class="sfplat">📸</div><div class="sfhandle">@fitwithtara</div><div class="sfaction">Reel — P2 Gym · @obsidianforged in caption</div><div class="sfmet">8.2K views</div><div class="sftime">7h ago</div></div>
+        <div class="sfrow"><div class="sfav">SK</div><div class="sfplat">📸</div><div class="sfhandle">@skinkare.soph</div><div class="sfaction">Static — P1 UGC · link in bio updated</div><div class="sfmet">4.1K views</div><div class="sftime">9h ago</div></div>
+        <div class="sfrow inactive"><div class="sfav dim">PS</div><div class="sfplat">—</div><div class="sfhandle muted">@priyaactive</div><div class="sfaction muted">No activity — 14 days since last post</div><div class="sfmet dim">Inactive</div><div class="sftime">—</div></div>
+      </div>
+      <div class="cf"><span class="muted" style="font-size:11px">🔄 OpenClaw automation will update this feed every 6 hours once reconnected. Currently pulling on demand via Composio.</span></div>
+    </div>
+  </div>
+
+  <!-- ══ TOOLS ══ -->
+  <div class="sb" id="tools">
+    <div class="sh"><div class="stitle">⊞ Templates &amp; AI Tools</div></div>
+    <div class="card" style="margin-bottom:22px">
+      <div class="ch">
+        <span class="ct">✦ Claude AI Agent</span>
+        <div style="display:flex;align-items:center;gap:7px">
+          <span class="sdot sdot-on">Live</span>
+          <button class="btn btn-g btn-sm" onclick="clearChat()">Clear</button>
+        </div>
+      </div>
+      <div class="agwrap">
+        <div class="agmsgs" id="agmsgs">
+          <div class="msg msg-a"><div class="mlbl">Claude · Obsidian Manager OS</div>Hey Rachel — I'm your AI assistant. I know your team, your PDC framework (Content · Community · Conversion), the 5 Content Pillars, and your ambassador roster. Ask me anything — draft messages, coaching scripts, content ideas, or build out new dashboard features.</div>
+        </div>
+        <div class="agin">
+          <input class="aginput" id="aginput" placeholder="e.g. Draft a DM for Riley who hasn't posted in 2 weeks..." onkeydown="if(event.key==='Enter')sendMsg()"/>
+          <button class="btn btn-p btn-sm" onclick="sendMsg()">Send ↑</button>
+        </div>
+      </div>
+    </div>
+    <div class="sec-lbl">⚡ Quick Launch</div>
+    <div class="qlg">
+      <button class="qlb" onclick="launch('Draft a PDC follow-up email for an ambassador behind on their sales goal who has not posted in a week.')"><span class="qlico">📧</span><div class="qlt">Draft PDC Email</div><div class="qld">Follow-up for at-risk ambassadors</div></button>
+      <button class="qlb" onclick="launch('Write a friendly accountability DM for an ambassador who has not posted in 2 weeks.')"><span class="qlico">💬</span><div class="qlt">Accountability Script</div><div class="qld">DM or voice note template</div></button>
+      <button class="qlb" onclick="launch('Generate 10 content ideas using all 5 Obsidian pillars: P1 UGC, P2 Gym, P3 Testimonials, P4 Lifestyle, P5 Photos.')"><span class="qlico">💡</span><div class="qlt">Content Ideation</div><div class="qld">Pillar-based post ideas</div></button>
+      <button class="qlb" onclick="launch('Write a PDC coaching script for a biweekly check-in covering Content, Community, and Conversion.')"><span class="qlico">🎯</span><div class="qlt">PDC Call Script</div><div class="qld">Ready-to-use coaching guide</div></button>
+      <button class="qlb" onclick="launch('Give 5 strategies to move ambassadors from Moderate to Healthy community health — 34 of 57 active (60%).')"><span class="qlico">📊</span><div class="qlt">Community Strategy</div><div class="qld">Boost community health score</div></button>
+      <button class="qlb" onclick="launch('Write a weekly performance summary for Team A: 57 ambassadors, $4,218 revenue, 34 posts, 60% community health, 78% goal rate.')"><span class="qlico">📋</span><div class="qlt">Weekly Report</div><div class="qld">Auto-draft performance summary</div></button>
+    </div>
+    <div class="sec-lbl" style="margin-top:8px">📋 PDC Template Library</div>
+    <div class="tmplg">
+      <div class="tmpl"><div class="tmlico">📞</div><div class="tmln">Biweekly Check-In</div><div class="tmld">Full PDC — Content, Community, Conversion</div></div>
+      <div class="tmpl"><div class="tmlico">🆕</div><div class="tmln">Welcome / Onboarding</div><div class="tmld">First call — goals, expectations, setup</div></div>
+      <div class="tmpl"><div class="tmlico">🚨</div><div class="tmln">At-Risk Recovery</div><div class="tmld">Urgent check-in for inactive ambassadors</div></div>
+      <div class="tmpl"><div class="tmlico">📅</div><div class="tmln">End-of-Month Review</div><div class="tmld">Wrap-up, tier review, next month planning</div></div>
+      <div class="tmpl"><div class="tmlico">🏆</div><div class="tmln">Tier Upgrade PDC</div><div class="tmld">Celebrate promotion, set higher targets</div></div>
+      <div class="tmpl"><div class="tmlico">🚀</div><div class="tmln">Launch Campaign Brief</div><div class="tmld">Pre-launch briefing and content plan</div></div>
+    </div>
+    <div class="sec-lbl" style="margin-top:8px">📖 5 Content Pillars</div>
+    <div class="pilg">
+      <div class="pilcard"><div class="piln">Pillar 1</div><div class="pilt">Product UGC</div><div class="pild">Honest personal experience. Hook → Action → Experience → Why it matters.</div></div>
+      <div class="pilcard"><div class="piln">Pillar 2</div><div class="pilt">Gym Content</div><div class="pild">Lifting, conditioning. Show effort, consistency, discipline. No selling needed.</div></div>
+      <div class="pilcard"><div class="piln">Pillar 3</div><div class="pilt">Testimonials</div><div class="pild">Why you align with Obsidian. Values, belief, mindset. Selling identity.</div></div>
+      <div class="pilcard"><div class="piln">Pillar 4</div><div class="pilt">Lifestyle</div><div class="pild">Life outside the gym. Routines, discipline moments. Obsidian becomes human.</div></div>
+      <div class="pilcard"><div class="piln">Pillar 5</div><div class="pilt">Photos</div><div class="pild">High-quality gym or lifestyle shots. Clear product visibility. Confidence over perfection.</div></div>
+    </div>
+  </div>
+
+  </div><!-- /page -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ═══ AMBASSADOR PROFILE MODAL ═══ -->
+<div class="overlay" id="amb-overlay">
+  <div class="modal">
+    <div class="mhdr">
+      <div>
+        <div class="mhdr-title" id="m-name">Ambassador Profile</div>
+        <div class="mhdr-sub" id="m-sub">Loading...</div>
+      </div>
+      <button class="mclose" onclick="closeProfile()">×</button>
+    </div>
+    <div class="mbody">
+
+      <!-- Profile header -->
+      <div class="amb-head">
+        <div class="amb-av" id="m-av">--</div>
+        <div class="amb-info">
+          <div class="amb-fullname" id="m-fullname">Name</div>
+          <div class="amb-handle" id="m-handle">@handle</div>
+          <div class="amb-meta">
+            <span class="tier" id="m-tier-badge">Tier</span>
+            <span class="badge b-gray" id="m-goal-badge">Goal%</span>
+            <span class="badge b-gray">Since Jan 2026</span>
+            <span class="badge b-gray" id="m-pdc-next">Next PDC: —</span>
+          </div>
+        </div>
+        <div>
+          <div class="amb-rev" id="m-rev">$—</div>
+          <div class="amb-rev-lbl">Revenue this month</div>
+        </div>
+      </div>
+
+      <!-- Goal progress -->
+      <div class="pw" style="margin-bottom:16px">
+        <div class="pl"><span class="pn">Goal Progress — May 2026</span><span class="pv" id="m-goal-pct">—</span></div>
+        <div class="pb" style="height:9px"><div class="pf" id="m-goal-bar" style="width:50%"></div></div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="ptabs">
+        <button class="ptab on" onclick="switchTab(this,'t-overview')">Overview</button>
+        <button class="ptab" onclick="switchTab(this,'t-pdcs')">PDC Files</button>
+        <button class="ptab" onclick="switchTab(this,'t-social')">Social Performance</button>
+        <button class="ptab" onclick="switchTab(this,'t-notes')">Manager Notes</button>
+      </div>
+
+      <!-- Overview Tab -->
+      <div class="ptc on" id="t-overview">
+        <div class="g3" style="margin-bottom:14px">
+          <div class="card"><div class="cb" style="text-align:center;padding:14px"><div style="font-size:20px;font-weight:800;color:var(--navy)" id="t-rev">$—</div><div class="muted" style="font-size:10px;margin-top:2px">Revenue (30d)</div></div></div>
+          <div class="card"><div class="cb" style="text-align:center;padding:14px"><div style="font-size:20px;font-weight:800;color:var(--navy)" id="t-posts">—</div><div class="muted" style="font-size:10px;margin-top:2px">Posts This Month</div></div></div>
+          <div class="card"><div class="cb" style="text-align:center;padding:14px"><div style="font-size:20px;font-weight:800;color:var(--navy)" id="t-comm">$—</div><div class="muted" style="font-size:10px;margin-top:2px">Commission Earned</div></div></div>
+        </div>
+        <div class="mr"><div><div class="mn">Current Tier</div></div><div><div class="mv" id="t-tier">—</div></div></div>
+        <div class="mr"><div><div class="mn">Commission Rate</div></div><div><div class="mv" id="t-rate">—</div></div></div>
+        <div class="mr"><div><div class="mn">Next PDC</div></div><div><div class="mv" id="t-next">—</div></div></div>
+        <div class="mr"><div><div class="mn">Top Content Pillars</div></div><div><div class="mv">P1, P2, P3</div></div></div>
+      </div>
+
+      <!-- PDC Files Tab -->
+      <div class="ptc" id="t-pdcs">
+        <div class="upload-zone" onclick="this.querySelector('input').click()">
+          <div class="uz-ico">📎</div>
+          <div class="uz-txt">Upload PDC Document</div>
+          <div class="uz-sub">PDF or DOCX · Saves directly to this ambassador's profile · No Google Drive needed</div>
+          <input type="file" style="display:none" accept=".pdf,.docx"/>
+        </div>
+        <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px">PDC History</div>
+        <div class="pdc-file"><div class="pdc-file-ico">📄</div><div class="pdc-file-name" id="f1-name">PDC_May_2026.pdf</div><div class="pdc-file-meta">Uploaded May 2, 2026 · Rachel M.</div><button class="btn btn-g btn-xs">↓ Download</button></div>
+        <div class="pdc-file"><div class="pdc-file-ico">📄</div><div class="pdc-file-name" id="f2-name">PDC_Apr_2026.pdf</div><div class="pdc-file-meta">Uploaded Apr 18, 2026 · Rachel M.</div><button class="btn btn-g btn-xs">↓ Download</button></div>
+        <div class="pdc-file"><div class="pdc-file-ico">📄</div><div class="pdc-file-name" id="f3-name">PDC_Mar_2026.pdf</div><div class="pdc-file-meta">Uploaded Mar 22, 2026 · Rachel M.</div><button class="btn btn-g btn-xs">↓ Download</button></div>
+      </div>
+
+      <!-- Social Tab -->
+      <div class="ptc" id="t-social">
+        <div class="g3" style="margin-bottom:14px">
+          <div class="card"><div class="cb" style="text-align:center;padding:14px"><div style="font-size:20px;font-weight:800;color:var(--navy)">42.1K</div><div class="muted" style="font-size:10px;margin-top:2px">Top Reel Views</div></div></div>
+          <div class="card"><div class="cb" style="text-align:center;padding:14px"><div style="font-size:20px;font-weight:800;color:var(--navy)">8.4%</div><div class="muted" style="font-size:10px;margin-top:2px">Avg Engagement</div></div></div>
+          <div class="card"><div class="cb" style="text-align:center;padding:14px"><div style="font-size:20px;font-weight:800;color:var(--navy)">18</div><div class="muted" style="font-size:10px;margin-top:2px">Total Posts (30d)</div></div></div>
+        </div>
+        <div style="padding:12px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);font-size:11px;color:var(--text2)">
+          🔄 <strong>Live social data</strong> will populate here automatically once OpenClaw reconnects. Showing last available snapshot from Composio.
+        </div>
+      </div>
+
+      <!-- Notes Tab -->
+      <div class="ptc" id="t-notes">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Private manager notes — only you can see this.</div>
+        <textarea class="notes-area" id="notes-content">Crystal is extremely self-motivated. Responds best to positive reinforcement. Expressed interest in becoming a Brand Captain. Follow up on product feedback re: new shorts sizing.</textarea>
+        <button class="btn btn-p btn-sm" style="margin-top:10px">Save Notes</button>
+      </div>
+
+    </div><!-- /mbody -->
+    <div class="mftr">
+      <button class="btn btn-g" onclick="closeProfile()">Close</button>
+      <button class="btn btn-p">+ New PDC for This Ambassador</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// COLLAPSIBLE NAV
+function toggleGroup(id) {
+  const grp = document.getElementById(id);
+  const items = document.getElementById(id + '-i');
+  if (grp.classList.contains('collapsed')) {
+    grp.classList.remove('collapsed');
+    items.style.maxHeight = items.scrollHeight + 'px';
+  } else {
+    grp.classList.add('collapsed');
+    items.style.maxHeight = '0';
+  }
+}
+document.querySelectorAll('.ngi').forEach(el => { el.style.maxHeight = el.scrollHeight + 'px'; });
+
+// ACTIVE NAV
+const sections = document.querySelectorAll('.sb[id]');
+const navLinks = document.querySelectorAll('.nav-item[href^="#"]');
+function updateNav() {
+  let cur = '';
+  sections.forEach(s => { if (s.getBoundingClientRect().top <= 80) cur = s.id; });
+  navLinks.forEach(l => {
+    l.classList.remove('active');
+    if (l.getAttribute('href') === '#' + cur) l.classList.add('active');
+  });
+  if (!cur && navLinks.length) navLinks[0].classList.add('active');
+}
+document.querySelector('.main').addEventListener('scroll', updateNav);
+navLinks.forEach(l => {
+  l.addEventListener('click', e => {
+    const href = l.getAttribute('href');
+    if (href?.startsWith('#')) {
+      e.preventDefault();
+      document.getElementById(href.slice(1))?.scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+  });
+});
+
+// CHIP TABS
+document.querySelectorAll('.chips').forEach(g => {
+  g.querySelectorAll('.chip').forEach(c => {
+    c.addEventListener('click', () => {
+      g.querySelectorAll('.chip').forEach(x => x.classList.remove('on'));
+      c.classList.add('on');
+    });
+  });
+});
+
+// AMBASSADOR PROFILE MODAL
+const ambData = {
+  'Crystal M.': { handle:'@crystalbeauty', tier:'Elite', tierClass:'t-e', rev:'$1,400', goal:'140%', goalPct:100, pcts:'12', comm:'$140', rate:'10%', next:'May 28, 2026', av:'CM', f1:'PDC_Crystal_May_2026.pdf', f2:'PDC_Crystal_Apr_2026.pdf', f3:'PDC_Crystal_Mar_2026.pdf' },
+  'Grace T.':   { handle:'@glowwithgrace', tier:'Gold',  tierClass:'t-g', rev:'$980',   goal:'123%', goalPct:100, pcts:'9',  comm:'$88',  rate:'9%',  next:'May 30, 2026', av:'GT', f1:'PDC_Grace_May_2026.pdf',   f2:'PDC_Grace_Apr_2026.pdf',   f3:'PDC_Grace_Mar_2026.pdf'   },
+  'Jess R.':    { handle:'@obsidianbabe',  tier:'Silver', tierClass:'t-s', rev:'$620',   goal:'103%', goalPct:100, pcts:'8',  comm:'$50',  rate:'8%',  next:'May 29, 2026', av:'JR', f1:'PDC_Jess_May_2026.pdf',    f2:'PDC_Jess_Apr_2026.pdf',    f3:'PDC_Jess_Mar_2026.pdf'    },
+  'Mel V.':     { handle:'@makeupbymel',   tier:'Bronze', tierClass:'t-b', rev:'$340',   goal:'68%',  goalPct:68,  pcts:'5',  comm:'$24',  rate:'7%',  next:'Overdue',      av:'MV', f1:'PDC_Mel_May_2026.pdf',     f2:'PDC_Mel_Apr_2026.pdf',     f3:'PDC_Mel_Mar_2026.pdf'     },
+  'Riley L.':   { handle:'@rileylooks',    tier:'Member', tierClass:'t-m', rev:'$140',   goal:'47%',  goalPct:47,  pcts:'3',  comm:'$10',  rate:'7%',  next:'Overdue',      av:'RL', f1:'PDC_Riley_May_2026.pdf',   f2:'PDC_Riley_Apr_2026.pdf',   f3:'PDC_Riley_Mar_2026.pdf'   },
+  'Priya S.':   { handle:'@priyaactive',   tier:'Member', tierClass:'t-m', rev:'$60',    goal:'20%',  goalPct:20,  pcts:'1',  comm:'$4',   rate:'7%',  next:'Not booked',   av:'PS', f1:'PDC_Priya_May_2026.pdf',   f2:'PDC_Priya_Apr_2026.pdf',   f3:'PDC_Priya_Mar_2026.pdf'   }
+};
+
+function openProfile(name, handle, tier, rev, goal, av) {
+  const d = ambData[name] || {};
+  document.getElementById('m-name').textContent = name + ' — Ambassador Profile';
+  document.getElementById('m-sub').textContent = handle + ' · ' + tier;
+  document.getElementById('m-av').textContent = av;
+  document.getElementById('m-fullname').textContent = name;
+  document.getElementById('m-handle').textContent = handle;
+  const tb = document.getElementById('m-tier-badge');
+  tb.textContent = tier; tb.className = 'tier ' + (d.tierClass || 't-m');
+  document.getElementById('m-goal-badge').textContent = goal;
+  document.getElementById('m-pdc-next').textContent = 'Next PDC: ' + (d.next || '—');
+  document.getElementById('m-rev').textContent = rev;
+  document.getElementById('m-goal-pct').textContent = rev + ' — ' + goal;
+  document.getElementById('m-goal-bar').style.width = (d.goalPct || 50) + '%';
+  document.getElementById('t-rev').textContent = rev;
+  document.getElementById('t-posts').textContent = d.pcts || '—';
+  document.getElementById('t-comm').textContent = d.comm || '—';
+  document.getElementById('t-tier').textContent = tier;
+  document.getElementById('t-rate').textContent = d.rate || '—';
+  document.getElementById('t-next').textContent = d.next || '—';
+  document.getElementById('f1-name').textContent = d.f1 || 'PDC_May_2026.pdf';
+  document.getElementById('f2-name').textContent = d.f2 || 'PDC_Apr_2026.pdf';
+  document.getElementById('f3-name').textContent = d.f3 || 'PDC_Mar_2026.pdf';
+  // Default notes
+  const notes = { 'Crystal M.':'Crystal is extremely self-motivated. Responds best to positive reinforcement. Expressed interest in becoming a Brand Captain. Follow up on product feedback re: new shorts sizing.', 'Grace T.':'Grace is consistent and reliable. Best contacted via Instagram DM. Working toward Gold → Elite by Q3.', 'Jess R.':'Jess is creative and engaged. Needs coaching on conversion content — strong at community pillars.', 'Mel V.':'Mel has been inconsistent. Last two PDC calls went well but follow-through has been low. Consider checking in mid-week.', 'Riley L.':'Riley has gone quiet. May need a motivation reset. Last PDC revealed personal stress — approach with empathy.', 'Priya S.':'No contact in 14 days. May need to escalate. Previous calls were positive but engagement has dropped significantly.' };
+  document.getElementById('notes-content').value = notes[name] || '';
+  // Reset tabs
+  document.querySelectorAll('.ptab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.ptc').forEach(t => t.classList.remove('on'));
+  document.querySelector('.ptab').classList.add('on');
+  document.getElementById('t-overview').classList.add('on');
+  document.getElementById('amb-overlay').classList.add('open');
+}
+
+function closeProfile() { document.getElementById('amb-overlay').classList.remove('open'); }
+document.getElementById('amb-overlay').addEventListener('click', function(e) { if (e.target === this) closeProfile(); });
+
+function switchTab(btn, id) {
+  btn.closest('.modal').querySelectorAll('.ptab').forEach(t => t.classList.remove('on'));
+  btn.classList.add('on');
+  btn.closest('.modal').querySelectorAll('.ptc').forEach(t => t.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+
+// CLAUDE AGENT
+const SYS = `You are Claude embedded in Obsidian's Athlete Manager Dashboard for Rachel M. (Team A, 57 ambassadors). Key ambassadors: Crystal M. (Elite, $1,400/mo, 140%), Grace T. (Gold, $980, 123%), Jess R. (Silver, $620, on track), Mel V. (Bronze, $340, 68% — behind), Riley L. (Member, $140, 47% — at risk), Priya S. (Member, $60, 20% — inactive 14 days). Team: $4,218 revenue, 34 posts/week, 60% community health (Moderate), 78% goal achievement. PDC: biweekly check-ins covering Content, Community, Conversion. 5 Pillars: P1=UGC, P2=Gym, P3=Testimonials, P4=Lifestyle, P5=Photos. Goal rankings: Sales/Content = Poor/Moderate/Successful. Community = Poor/Moderate/Healthy. Be concise and actionable.`;
+
+async function sendMsg() {
+  const inp = document.getElementById('aginput');
+  const msgs = document.getElementById('agmsgs');
+  const txt = inp.value.trim();
+  if (!txt) return;
+  inp.value = '';
+  const um = document.createElement('div');
+  um.className = 'msg msg-u';
+  um.innerHTML = '<div class="mlbl">Rachel</div>' + txt;
+  msgs.appendChild(um);
+  const th = document.createElement('div');
+  th.className = 'msg msg-a';
+  th.innerHTML = '<div class="mlbl">Claude</div><div class="thdots"><div class="thdot"></div><div class="thdot"></div><div class="thdot"></div></div>';
+  msgs.appendChild(th);
+  msgs.scrollTop = msgs.scrollHeight;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, system:SYS, messages:[{role:'user',content:txt}] })
+    });
+    const d = await r.json();
+    th.innerHTML = '<div class="mlbl">Claude</div>' + (d.content?.[0]?.text || 'Sorry, try again.').replace(/\n/g,'<br>');
+  } catch(e) {
+    th.innerHTML = '<div class="mlbl">Claude</div>To activate the live Claude Agent, add your Anthropic API key. All other features work without it.';
+  }
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function clearChat() {
+  document.getElementById('agmsgs').innerHTML = '<div class="msg msg-a"><div class="mlbl">Claude</div>Chat cleared. What do you need, Rachel?</div>';
+}
+
+function launch(prompt) {
+  document.getElementById('aginput').value = prompt;
+  document.getElementById('tools').scrollIntoView({behavior:'smooth'});
+  setTimeout(() => document.getElementById('aginput').focus(), 400);
+}
+</script>
+</body>
+</html>

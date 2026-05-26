@@ -564,7 +564,25 @@
   .claude-suggestion:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
 </style>
 </head>
-<body>
+<body><div id="auth-overlay" style="position:fixed;inset:0;background:#0A0A0A;display:flex;align-items:center;justify-content:center;z-index:9999;">
+  <div style="background:#fff;border-radius:16px;padding:48px 44px;width:380px;box-shadow:0 24px 60px rgba(0,0,0,0.3);text-align:center;">
+    <div style="font-size:22px;font-weight:800;letter-spacing:0.08em;color:#1E3A5F;text-transform:uppercase;margin-bottom:6px;">Obsidian</div>
+    <div style="font-size:13px;color:#6B7280;margin-bottom:28px;">Command Dashboard</div>
+    <input type="password" id="auth-pw" placeholder="Enter password" style="width:100%;padding:12px 14px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:14px;margin-bottom:16px;outline:none;" onkeydown="if(event.key==='Enter')checkAuth()">
+    <button onclick="checkAuth()" style="width:100%;padding:13px;background:#1E3A5F;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Access Dashboard</button>
+    <div id="auth-error" style="color:#DC2626;font-size:12px;margin-top:10px;display:none;">Incorrect password.</div>
+  </div>
+</div>
+<script>
+function checkAuth(){
+  if(document.getElementById('auth-pw').value==='OBSIDIAN'){
+    document.getElementById('auth-overlay').style.display='none';
+  } else {
+    document.getElementById('auth-error').style.display='block';
+    document.getElementById('auth-pw').value='';
+  }
+}
+</script>
 <div class="app">
 
   <!-- SIDEBAR -->
